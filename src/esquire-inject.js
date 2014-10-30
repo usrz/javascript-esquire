@@ -14,7 +14,7 @@
       } else if (Array.isArray(current)) {
         array = array.concat(flatten(current));
       } else {
-        throw new Error("Esquire: Invalid dependency: " + current);
+        throw new EsquireError("Invalid dependency: " + current);
       }
     }
     return array;
@@ -54,11 +54,11 @@
 
     /* Basic checks */
     if (typeof(name) != 'string') {
-      throw new Error("Esquire: Invalid module name: " + name);
+      throw new EsquireError("Invalid module name: " + name);
     } else if (modules[name]) {
-      throw new Error("Esquire: Module '" + name + "' already defined");
+      throw new EsquireError("Module '" + name + "' already defined");
     } else if (typeof(constructor) != 'function') {
-      throw new Error("Esquire: Constructor for module '" + name + "' is not a function: " + constructor);
+      throw new EsquireError("Constructor for module '" + name + "' is not a function: " + constructor);
     }
 
     /* Flatten our dependencies */
@@ -211,7 +211,7 @@
       if (callback == null) {
         callback = function() {} // return undefined!
       } else if (typeof(callback) != 'function') {
-        throw new Error("Esquire: Injection callback is not a function: " + callback);
+        throw new EsquireError("Injection callback is not a function: " + callback);
       }
 
       /* Flatten/convert our dependencies */
@@ -283,5 +283,53 @@
 
   /* Set our Esquire function globally */
   window.Esquire = Esquire;
+
+  /* ======================================================================== */
+  /* Esquire static injection                                                 */
+  /* ======================================================================== */
+
+  var staticEsquire = new Esquire();
+
+  /**
+   * @namespace esquire
+   */
+
+  /**
+   * Request **static** injection for the specified modules.
+   *
+   * If no callback function was specified, this method will behave like
+   * {@link Esquire.require}, simply returning the required dependencies.
+   *
+   * @static
+   * @global
+   * @function esquire.esquire
+   * @param {array}    dependencies - An array of required module names whose
+   *                                  instances will be passed to the
+   *                                  `callback(...)` method.
+   * @param {function} [callback] - A function that will be called once all
+   *                                module dependencies have been instantiated,
+   *                                with each instance as a parameter.
+   */
+  window.esquire = function() {
+    /* No arguments? Ignore */
+    if (arguments.length == 0) return undefined;
+
+    /* Could someone have done esquire(function(...) {} ??? */
+    if ((arguments.length == 1) && (typeof(arguments[0]) == 'function')) {
+      throw new EsquireError("Invalid parameter for static injection");
+    }
+
+    /* Two arguments: esquire("a", "b") or esquire(['deps'], function() {}) */
+    if ((arguments.length == 2) && (typeof(arguments[1]) == 'function')) {
+      return staticEsquire.inject(arguments[0], arguments[1]);
+    }
+
+    /* More than two arguments? Just a list of strings */
+    return staticEsquire.require(arguments);
+
+  };
+
+
+
 
 })(self);
