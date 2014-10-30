@@ -1,0 +1,15 @@
+{
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks":    true,
+    "monospaceLinks": true,
+    "applicationName": "USRZ Slave API",
+    "default": {
+        "outputSourceFiles" : false
+    },
+  },
+  "markdown": {
+    "parser": "gfm",
+    "hardwrap": true
+  }
+}

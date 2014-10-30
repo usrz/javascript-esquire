@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Class: Esquire</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/jquery.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/bootstrap.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/jaguar.css">
+    
+    
+    <script>
+    var config = {"monospaceLinks":true,"cleverLinks":true,"applicationName":"USRZ Slave API","default":{"outputSourceFiles":false}};
+    </script>
+    
+
+    
+</head>
+<body>
+<div id="wrap" class="clearfix">
+    
+<div class="navigation">
+    <h3 class="applicationName"><a href="index.html">USRZ Slave API</a></h3>
+
+    <div class="search">
+        <input id="search" type="text" class="form-control input-sm" placeholder="Search Documentations">
+    </div>
+    <ul class="list">
+    
+        <li class="item" data-name="Esquire">
+            <span class="title">
+                <a href="Esquire.html">Esquire</a>
+                
+            </span>
+            <ul class="members itemMembers">
+            
+            <span class="subtitle">Members</span>
+            
+                <li data-name="Esquire.modules"><a href="Esquire.html#modules">modules</a></li>
+            
+            </ul>
+            <ul class="typedefs itemMembers">
+            
+            </ul>
+            <ul class="methods itemMembers">
+            
+            <span class="subtitle">Methods</span>
+            
+                <li data-name="Esquire.define"><a href="Esquire.html#define">define</a></li>
+            
+                <li data-name="Esquire.karma"><a href="Esquire.html#karma">karma</a></li>
+            
+                <li data-name="Esquire.load"><a href="Esquire.html#load">load</a></li>
+            
+                <li data-name="Esquire#inject"><a href="Esquire.html#inject">inject</a></li>
+            
+                <li data-name="Esquire#require"><a href="Esquire.html#require">require</a></li>
+            
+            </ul>
+            <ul class="events itemMembers">
+            
+            </ul>
+        </li>
+    
+    </ul>
+</div>
+    <div class="main">
+        <h1 class="page-title" data-filename="Esquire.html">Class: Esquire</h1>
+        
+
+
+
+<section>
+    
+<header>
+    <h2>
+    Esquire
+    </h2>
+    
+</header>  
+
+<article>
+    <div class="container-overview">
+    
+    
+    
+        
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="Esquire">
+            
+            new Esquire<span class="signature">()</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            esquire-inject.js, line 104
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Create a new <a href="Esquire.html"><code>Esquire</code></a> instance.</p>
+<p>While <a href="Esquire.html#modules"><code>modules</code></a> are <em>static</em> and shared amongst all
+<a href="Esquire.html"><code>Esquire</code></a> instances (see <a href="Esquire.html#define"><code>define(...)</code></a>, too),
+their instances are not, but only created <em>once</em> for each <a href="Esquire.html"><code>Esquire</code></a>
+instance.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+    
+    </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        <h3 class="subsection-title">Members</h3>
+        
+        <dl>
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="modules"><span class="type-signature static">static</span>Esquire.modules</h4>
+    </div>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>An unmodifiable dictionary of all modules known by <a href="Esquire.html"><code>Esquire</code></a>.</p>
+    </div>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+        <h5>Example</h5>
+        
+
+    
+    <pre class="prettyprint"><code>{
+  "modA": {
+    "dependencies": [ ... ],
+    "constructor": function(...) { ... }
+  },
+  "depB": {
+    "dependencies": [ ... ],
+    "constructor": function(...) { ... }
+  },
+}</code></pre>
+    
+
+    
+</dd>
+
+        </dl>
+    
+    
+    
+        <h3 class="subsection-title">Methods</h3>
+        
+        <dl>
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="define">
+            
+            <span class="type-signature static">static</span>Esquire.define<span class="signature">(name, dependencies, constructor)</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            esquire-inject.js, line 29
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Define a module as available to Esquire</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>The name of the module to define.</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>dependencies</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">array</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>An array of required module names whose
+                                 instances will be passed to the
+                                 <code>constructor(...)</code> method.</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>constructor</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>A function that will be invoked once per
+                                each new <a href="Esquire.html"><code>Esquire</code></a> instance that
+                                will have to return the instance to
+                                associate with the module name.</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+        <h5>Example</h5>
+        
+
+    
+    <pre class="prettyprint"><code>Esquire.define('foo', ['modA', 'depB'], function(a, b) {
+  // 'a' will be an instance of 'modA'
+  // 'b' will be an instance of 'depB'
+  function Foo(aInstance, bInstance) {
+    // ...
+  };
+  return new Foo(a, b);
+});</code></pre>
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="karma">
+            
+            <span class="type-signature static">static</span>Esquire.karma<span class="signature">(what)</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            esquire-karma.js, line 16
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Load a number of scripts before running <code>Karma</code>.</p>
+<p>When working with <code>Karma</code> for unit testing, this method can be used to
+specify what scripts to be loaded with each run.</p>
+<p>When invoked with a <code>RegExp</code>, any file matching the expression will be
+loaeded.</p>
+<p>When invoked with a <code>function</code>, the specified <code>function</code> will be invoked
+with each file known to <code>Karma</code> and said script will be loaded if the
+function returns a <em>truthy</em> value.</p>
+<p>This method can be invoked <em>multiple</em> times, and all callbacks or
+expressions will be evaluated. If any of them matches, the script will
+be loaded.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>what</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+|
+
+<span class="param-type">RegExp</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>The regular expression or function matching
+                              scripts to load before a <code>Karma</code> run.</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+        <h5>Example</h5>
+        
+
+    
+    <pre class="prettyprint"><code>// This will load all '/tests/deferred/....js' files
+Esquire.karma(/^\/tests\/deferred\/.\.js$/);
+
+// The function will be invoked with every file, and said file will be
+// loaded if the function returns a truthy value
+Esquire.karma(function(file) {
+  return ...;
+});</code></pre>
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="load">
+            
+            <span class="type-signature static">static</span>Esquire.load<span class="signature">()</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            esquire-load.js, line 164
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Load an external script and return a <em>then-able</em> <code>Promise</code>.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>...</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>The scripts to load (a string or an array thereof).</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+        <h5>Example</h5>
+        
+
+    
+    <pre class="prettyprint"><code>Esquire.load('scriptA.js', 'scriptB.js')
+  .then(
+    function(modules) {
+      // All good: 'modules' will be the same as <a href="Esquire.html#modules"><code>Esquire.modules</code></a>
+    },
+    function(failure) {
+      // Something bad happend: 'failure' will contain the reason.
+    }
+  );</code></pre>
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="inject">
+            
+            inject<span class="signature">(dependencies, callback)</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            esquire-inject.js, line 190
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Request injection for the specified modules.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>dependencies</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">array</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>An array of required module names whose
+                                 instances will be passed to the
+                                 <code>callback(...)</code> method.</p></td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>A function that will be called once all
+                             module dependencies have been instantiated,
+                             with each instance as a parameter.</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+        <h5>Example</h5>
+        
+
+    
+    <pre class="prettyprint"><code>var esq = new Esquire();
+esq.inject(['modA', 'depB'], function(a, b) {
+  // 'a' will be an instance of 'modA'
+  // 'b' will be an instance of 'depB'
+});</code></pre>
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <div class="nameContainer">
+        <h4 class="name" id="require">
+            
+            require<span class="signature">(dependencies)</span>
+        </h4>
+    
+        
+        <div class="tag-source">
+            esquire-inject.js, line 152
+        </div>
+        
+    </div>
+
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Require instances for the specified module(s).</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>dependencies</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">array</span>
+|
+
+<span class="param-type">string</span>
+
+
+            
+            </td>
+            
+            
+            
+            <td class="description last">
+                
+                <p>An array of required module names
+                                     whose be returned, or a string
+                                     identifying a single module name
+                                     to return.</p></td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+        <h5>Example</h5>
+        
+
+    
+    <pre class="prettyprint"><code>var esq = new Esquire();
+
+var foo = esq.require('fooModule');
+// 'foo' will be an instance of 'fooModule'
+
+var instances = esq.require(['barModule', 'bazModule']);
+// instances[0] will be an instance of 'barModule'
+// instances[1] will be an instance of 'bazModule'</code></pre>
+    
+
+    
+</dd>
+
+        </dl>
+    
+    
+    
+    
+    
+</article>
+
+</section>  
+
+
+
+
+
+        
+
+        <footer>
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Thu Oct 30 2014 19:47:16 GMT+0900 (JST)
+        </footer>
+    </div>
+</div>
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+<script src="scripts/main.js"></script>
+</body>
+</html>
