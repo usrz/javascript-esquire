@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Index</title>
+    <title>Namespace: esquire</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -93,40 +93,77 @@
     </ul>
 </div>
     <div class="main">
-        <h1 class="page-title" data-filename="index.html">Index</h1>
+        <h1 class="page-title" data-filename="global.html#esquire">Namespace: esquire</h1>
         
 
 
+
+<section>
+    
+<header>
+    <h2>
+    esquire
+    </h2>
+    
+</header>  
+
+<article>
+    <div class="container-overview">
+    
+    
+    
+        
+        
+        
+<dl class="details">
+    
+        
+    
+    
     
 
-
-    <h3> </h3>
-
-
-
-
-
-
-
-
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
 
+        
+        
+    
+    </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</article>
 
-
-
-    <section>
-        <article class="readme"><h1>Esquire</h1>
-<p>Esquire is a light weight script loader and injection framework for JavaScript.</p>
-<p>It is similar in conecpt to <em>RequireJS</em> but with a few twists:</p>
-<ul>
-<li>Module loading, definition and instantiation is completely separate.</li>
-<li>Many instances of the same injector can be used, module instances will be
-kept separate.</li>
-<li>It plays nicely with <em>Karma</em> for testing...</li>
-</ul>
-<p>See the API documentation include in the <code>docs</code> directory for more ideas...</p></article>
-    </section>
-
+</section>  
 
 
 

@@ -3,7 +3,7 @@
   "templates": {
     "cleverLinks":    true,
     "monospaceLinks": true,
-    "applicationName": "USRZ Slave API",
+    "applicationName": "USRZ Esquire API",
     "default": {
         "outputSourceFiles" : false
     },
