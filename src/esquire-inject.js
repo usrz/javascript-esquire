@@ -77,28 +77,27 @@
   /* Esquire constructor                                                      */
   /* ======================================================================== */
 
-  function NoModuleError(name, dependencyStack) {
-    Error.call(this);
-    var message = "Esquire: Module '" + name + "' not found";
-    if (dependencyStack.length > 1) { // index 0 is always '$inject$'
+  function EsquireError(message, dependencyStack) {
+    message = "Esquire: " + (message || "Unknown error");
+    if (dependencyStack && (dependencyStack.length > 1)) { // 0 is always null
       message += " resolving"
       for (var i = 1; i < dependencyStack.length; i ++) {
         message += " -> '" + dependencyStack[i] + "'";
       }
     }
+
+    this.constructor.prototype.__proto__ = Error.prototype;
+    Error.call(this, message);
+    this.name = "EsquireError";
     this.message = message;
+  }
+
+  function NoModuleError(name, dependencyStack) {
+    EsquireError.call(this, "Module '" + name + "' not found");
   };
 
   function CircularDependencyError(name, dependencyStack) {
-    Error.call(this);
-    var message = "Esquire: Module '" + name + "' has circular dependencies";
-    if (dependencyStack.length > 1) { // index 0 is always '$inject$'
-      message += " resolving"
-      for (var i = 1; i < dependencyStack.length; i ++) {
-        message += " -> '" + dependencyStack[i] + "'";
-      }
-    }
-    this.message = message;
+    EsquireError.call(this, "Module '" + name + "' has circular dependencies");
   };
 
   /**
