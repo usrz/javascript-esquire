@@ -1,5 +1,3 @@
-Esquire.karma(/\/base\/test\/modules\/.+\.js/);
-
 describe("Esquire inject", function() {
 
   /* ======================================================================== */

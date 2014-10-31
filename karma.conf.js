@@ -17,16 +17,7 @@ module.exports = function(config) {
       'src/esquire-karma.js',
       'src/esquire-load.js',
       'test/esquire-inject.test.js',
-
-      /* Loaded */
-      { pattern: 'test/**/*.js',   included: false },
-      { pattern: 'test/**/*.html', included: false },
-    ],
-
-    /* Exclude load and browser files */
-    exclude: [
-      'test/browser/**',
-      'test/load/**'
+      'test/modules/*.js',
     ],
 
     /* Pretty */

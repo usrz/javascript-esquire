@@ -21,10 +21,6 @@ module.exports = function(grunt) {
 
     /* Uglify task */
     uglify: {
-      karma: {
-        src: 'src/esquire-karma.js',
-        dest: 'esquire-karma.min.js'
-      },
       load: {
         src: 'src/esquire-load.js',
         dest: 'esquire-load.min.js'
