@@ -2,15 +2,15 @@ module.exports = function(grunt) {
   grunt.initConfig({
 
     /* Unit testing */
-    karma: {
-      load: {
+    'karma': {
+      'load': {
         configFile: 'karma.load.js',
         runnerPort: 9999,
         singleRun: true,
         browsers: ['PhantomJS', 'Chrome', 'Firefox', 'Safari'],
         logLevel: 'ERROR'
       },
-      default: {
+      'default': {
         configFile: 'karma.conf.js',
         runnerPort: 9999,
         singleRun: true,
@@ -20,30 +20,38 @@ module.exports = function(grunt) {
     },
 
     /* Uglify task */
-    uglify: {
-      load: {
+    'uglify': {
+      'load': {
         src: 'src/esquire-load.js',
         dest: 'esquire-load.min.js'
       },
-      inject: {
+      'inject': {
         src: 'src/esquire-inject.js',
         dest: 'esquire-inject.min.js'
       },
-      defaut: {
+      'defaut': {
         src: [ 'src/esquire-inject.js', 'src/esquire-load.js' ],
         dest: 'esquire.min.js'
       }
     },
 
     /* Documentation task */
-    jsdoc : {
-      dist : {
+    'jsdoc' : {
+      'dist' : {
         src: ['src/*.js', 'README.md'],
         options: {
           destination: 'docs',
-          template : "node_modules/jaguarjs-jsdoc",
-          configure : "jsdoc.conf.json"
+          template : 'node_modules/jaguarjs-jsdoc',
+          configure : 'jsdoc.conf.json'
         }
+      }
+    },
+
+    /* Publish GirHub Pages */
+    'gh-pages': {
+      src: '**/*',
+      'options': {
+        base: 'docs'
       }
     }
 
@@ -53,9 +61,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-jsdoc');
+  grunt.loadNpmTasks('grunt-gh-pages');
 
   /* Default task: requirejs then uglify */
-  grunt.registerTask('default', ['karma', 'uglify', 'jsdoc']);
-  grunt.registerTask('quick', ['uglify', 'jsdoc']);
+  grunt.registerTask('default', ['karma',   'uglify'  ]);
+  grunt.registerTask('docs',    ['jsdoc',   'gh-pages']);
 
 };
