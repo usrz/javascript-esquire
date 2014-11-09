@@ -36,13 +36,23 @@ module.exports = function(grunt) {
     },
 
     /* Documentation task */
-    'jsdoc' : {
+    'jsdoc-ng' : {
       'dist' : {
-        src: ['src/*.js', 'README.md'],
+        src: ['src/*.js', 'README.md' ],
+        dest: 'docs',
+        template : 'jsdoc-ng',
         options: {
-          destination: 'docs',
-          template : 'node_modules/jaguarjs-jsdoc',
-          configure : 'jsdoc.conf.json'
+          "plugins": ["plugins/markdown"],
+          "templates": {
+            "cleverLinks":    true,
+            "monospaceLinks": true,
+            "windowTitle": "Esquire API",
+            "minify": true
+          },
+          "markdown": {
+            "parser": "gfm",
+            "hardwrap": true
+          }
         }
       }
     },
@@ -60,11 +70,11 @@ module.exports = function(grunt) {
   /* Load our plugins */
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-jsdoc');
+  grunt.loadNpmTasks('grunt-jsdoc-ng');
   grunt.loadNpmTasks('grunt-gh-pages');
 
   /* Default task: requirejs then uglify */
-  grunt.registerTask('default', ['karma',   'uglify'  ]);
-  grunt.registerTask('docs',    ['jsdoc',   'gh-pages']);
+  grunt.registerTask('default', ['karma', 'uglify'  ]);
+  grunt.registerTask('docs',    ['jsdoc-ng', 'gh-pages']);
 
 };

@@ -32,7 +32,7 @@
    * @static
    * @function define
    * @memberof Esquire
-   * @example
+   * @example Define a "foo" module requiring two dependencies.
    * Esquire.define('foo', ['modA', 'depB'], function(a, b) {
    *   // 'a' will be an instance of 'modA'
    *   // 'b' will be an instance of 'depB'
@@ -42,13 +42,13 @@
    *   return new Foo(a, b);
    * });
    * @param {string}   name - The name of the module to define.
-   * @param {array}    dependencies - An array of required module names whose
+   * @param {string[]} dependencies - An array of required module names whose
    *                                  instances will be passed to the
    *                                  `constructor(...)` method.
    * @param {function} constructor - A function that will be invoked once per
-   *                                 each new {@link Esquire} instance that
-   *                                 will have to return the instance to
-   *                                 associate with the module name.
+   *                                 each {@link Esquire} instance. Its return
+   *                                 value will be injected in any other module
+   *                                 requiring this module as a dependency.
    */
   function define(name, dependencies, constructor) {
 
@@ -101,14 +101,18 @@
   };
 
   /**
-   * Create a new {@link Esquire} instance.
-   *
-   * While {@link Esquire.modules modules} are _static_ and shared amongst all
-   * {@link Esquire} instances (see {@link Esquire.define define(...)}, too),
-   * their instances are not, but only created _once_ for each {@link Esquire}
-   * instance.
+   * Create a new {@link Esquire} injector instance.
    *
    * @class Esquire
+   * @classdesc
+   * {@link Esquire.modules Modules} are _static_ and shared amongst
+   * all {@link Esquire} instances (see [define(...)]{@link Esquire.define}),
+   * but their instances not, and are only created _once_ for each
+   * {@link Esquire} instance.
+   *
+   * A _globally shared_ {@link Esquire} instance can be used by invoking the
+   * [esquire(...)]{@link esquire} method, rather than creating a new instance
+   * and using the [require(...)]{@link Esquire#require} call.
    */
   function Esquire() {
     /* Proper construction */
@@ -152,7 +156,7 @@
      * Require instances for the specified module(s).
      *
      * @instance
-     * @function require
+     * @function
      * @memberof Esquire
      * @example
      * var esq = new Esquire();
@@ -163,10 +167,9 @@
      * var instances = esq.require(['barModule', 'bazModule']);
      * // instances[0] will be an instance of 'barModule'
      * // instances[1] will be an instance of 'bazModule'
-     * @param {array|string} dependencies - An array of required module names
-     *                                      whose be returned, or a string
-     *                                      identifying a single module name
-     *                                      to return.
+     * @param {string[]|string} dependencies - An array of required module names
+     *                                         (or a single module name) whose
+     *                                         instance are to be returned.
      */
     function require(dependencies) {
       if ((arguments.length == 1) && (typeof(dependencies) == 'string')) {
@@ -198,9 +201,9 @@
      *   // 'a' will be an instance of 'modA'
      *   // 'b' will be an instance of 'depB'
      * });
-     * @param {array}    dependencies - An array of required module names whose
-     *                                  instances will be passed to the
-     *                                  `callback(...)` method.
+     * @param {string[]}    dependencies - An array of required module names
+     *                                     whose instances will be passed to the
+     *                                     `callback(...)` method.
      * @param {function} callback - A function that will be called once all
      *                              module dependencies have been instantiated,
      *                              with each instance as a parameter.
@@ -291,18 +294,18 @@
   var staticEsquire = new Esquire();
 
   /**
-   * @namespace esquire
-   */
-
-  /**
    * Request **static** injection for the specified modules.
    *
-   * If no callback function was specified, this method will behave like
-   * {@link Esquire.require}, simply returning the required dependencies.
+   * IF a `callback` function was specified, then this method will behave like
+   * [inject(...)]{@link Esquire#inject}, while if no `callback` function was
+   * given, this method will behave like [require(...)]{@link Esquire.require},
+   * simply returning the required dependencies.
+   *
+   * Note that this method will use a globally shared {@link Esquire} instance
+   * to create and resolve dependencies.
    *
    * @static
    * @global
-   * @function esquire.esquire
    * @param {array}    dependencies - An array of required module names whose
    *                                  instances will be passed to the
    *                                  `callback(...)` method.

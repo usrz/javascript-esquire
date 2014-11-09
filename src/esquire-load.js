@@ -167,7 +167,7 @@
    * @static
    * @function load
    * @memberof Esquire
-   * @example
+   * @example Loading external scripts with Esquire
    * Esquire.load('scriptA.js', 'scriptB.js')
    *   .then(
    *     function(modules) {
@@ -177,7 +177,7 @@
    *       // Something bad happend: 'failure' will contain the reason.
    *     }
    *   );
-   * @param {*} ... The scripts to load (a string or an array thereof).
+   * @param {string|string[]} ... The scripts to load (a string or arrays thereof).
    */
   function load() {
     if (! document) throw new Error("Esquire: Document not available");
