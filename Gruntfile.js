@@ -44,10 +44,8 @@ module.exports = function(grunt) {
         options: {
           "plugins": ["plugins/markdown"],
           "templates": {
-            "cleverLinks":    true,
-            "monospaceLinks": true,
-            "windowTitle": "Esquire API",
-            "minify": true
+            "cleverLinks": true,
+            "windowTitle": "Esquire API"
           },
           "markdown": {
             "parser": "gfm",
