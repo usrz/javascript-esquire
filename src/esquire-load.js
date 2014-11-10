@@ -173,22 +173,25 @@
   var document = window.document;
 
   /**
-   * Load an external script and return a _then-able_ `Promise`.
+   * Load an external script and return a _then-able_
+   * [`Promise`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise).
    *
    * @static
    * @function load
    * @memberof Esquire
-   * @example Loading external scripts with Esquire
-   * Esquire.load('scriptA.js', 'scriptB.js')
-   *   .then(
-   *     function(modules) {
-   *       // All good: 'modules' will be the same as {@link Esquire.modules}
-   *     },
-   *     function(failure) {
-   *       // Something bad happend: 'failure' will contain the reason.
-   *     }
-   *   );
-   * @param {string|string[]} ... The scripts to load (a string or arrays thereof).
+   * @example -
+   * Esquire.load('scriptA.js', 'scriptB.js').then(
+   *   function(modules) {
+   *     // All good: 'modules' will be the same as "Esquire.modules"
+   *   },
+   *   function(failure) {
+   *     // Something bad happend: 'failure' will contain the reason.
+   *   }
+   * );
+   * @param {string|string[]} scripts The script(s) to load.
+   * @param {string} [...] - Any other script names, as arguments, to support
+   *                         calls like `load('scriptA.js', 'scriptB.js')`
+   * @return {Promise} A _then-able_ `Promise` resolving {@link Esquire.modules}.
    */
   function load() {
     if (! document) throw new Error("Esquire: Document not available");

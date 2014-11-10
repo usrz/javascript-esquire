@@ -32,7 +32,7 @@
    * @static
    * @function define
    * @memberof Esquire
-   * @example Define a "foo" module requiring two dependencies.
+   * @example -
    * Esquire.define('foo', ['modA', 'depB'], function(a, b) {
    *   // 'a' will be an instance of 'modA'
    *   // 'b' will be an instance of 'depB'
@@ -158,7 +158,7 @@
      * @instance
      * @function
      * @memberof Esquire
-     * @example
+     * @example -
      * var esq = new Esquire();
      *
      * var foo = esq.require('fooModule');
@@ -170,6 +170,11 @@
      * @param {string[]|string} dependencies - An array of required module names
      *                                         (or a single module name) whose
      *                                         instance are to be returned.
+     * @param {string} [...] - Any other module name, as arguments, to support
+     *                         calls like `require('barModule', 'bazModule')`
+     * @return {object[]|object} An array of module instances, or a single
+     *                           module instance, if this method was called
+     *                           with a single `string` parameter.
      */
     function require(dependencies) {
       if ((arguments.length == 1) && (typeof(dependencies) == 'string')) {
@@ -195,24 +200,31 @@
      * @instance
      * @function inject
      * @memberof Esquire
-     * @example
+     * @example -
      * var esq = new Esquire();
      * esq.inject(['modA', 'depB'], function(a, b) {
      *   // 'a' will be an instance of 'modA'
      *   // 'b' will be an instance of 'depB'
      * });
-     * @param {string[]}    dependencies - An array of required module names
-     *                                     whose instances will be passed to the
-     *                                     `callback(...)` method.
+     * @param {string[]|string} [dependencies] - An array of required module
+     *                                           names whose instances will be
+     *                                           passed to the `callback(...)`
+     *                                           method.
      * @param {function} callback - A function that will be called once all
      *                              module dependencies have been instantiated,
      *                              with each instance as a parameter.
+     * @return Whatever value was returned by the `callback` function.
      */
     function inject(dependencies, callback) {
 
       /* Sanity check, null callback just create... */
       if (callback == null) {
-        callback = function() {} // return undefined!
+        if (typeof(dependencies) === 'function') {
+          callback = dependencies;
+          dependencies = [];
+        } else {
+          callback = function() {} // return undefined!
+        }
       } else if (typeof(callback) != 'function') {
         throw new EsquireError("Injection callback is not a function: " + callback);
       }
@@ -252,7 +264,7 @@
      * @static
      * @member modules
      * @memberof Esquire
-     * @example
+     * @example -
      * {
      *   "modA": {
      *     "dependencies": [ ... ],
@@ -296,10 +308,14 @@
   /**
    * Request **static** injection for the specified modules.
    *
-   * IF a `callback` function was specified, then this method will behave like
-   * [inject(...)]{@link Esquire#inject}, while if no `callback` function was
-   * given, this method will behave like [require(...)]{@link Esquire.require},
-   * simply returning the required dependencies.
+   * If a `callback` function was specified, then this method will behave like
+   * [inject(...)]{@link Esquire#inject}, thus dependencies will be resolved
+   * and passed to `callback` method, and its return value (if any) will be
+   * returned from this method.
+   *
+   * If no `callback` function was given, this method will behave like
+   * [require(...)]{@link Esquire.require} and simply return the required
+   * dependencies.
    *
    * Note that this method will use a globally shared {@link Esquire} instance
    * to create and resolve dependencies.
@@ -312,6 +328,11 @@
    * @param {function} [callback] - A function that will be called once all
    *                                module dependencies have been instantiated,
    *                                with each instance as a parameter.
+   * @return {object} Whatever value was returned by the `callback` function
+   *                  (if one was specified) as in {@link Esquire#inject}.
+   * @return {object[]|object} An array of module instances (or a single module
+   *                           instance) as in {@link Esquire#require} if this
+   *                           method was called wihtout any `callback` function.
    */
   window.esquire = function() {
     /* No arguments? Ignore */
