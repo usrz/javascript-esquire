@@ -26,14 +26,29 @@ describe("Esquire inject", function() {
 
   describe("normal injection", function() {
 
+    it('should execute without injection', function() {
+
+      var a;
+      var b = new Esquire().inject(function() {
+        a = "executed";
+        return "returned";
+      });
+
+      expect(a).to.be.equal('executed');
+      expect(b).to.be.equal('returned');
+
+    });
+
     it('should inject a single module', function() {
 
       var a;
-      new Esquire().inject(["module-a"], function(injected) {
+      var b = new Esquire().inject(["module-a"], function(injected) {
         a = injected;
+        return "returned";
       });
 
       expect(a).to.be.equal('valueForModuleA');
+      expect(b).to.be.equal('returned');
 
     });
 
@@ -41,13 +56,15 @@ describe("Esquire inject", function() {
 
       var a1;
       var a2;
-      new Esquire().inject(["module-a", "module-a"], function(injected1, injected2) {
+      var b = new Esquire().inject(["module-a", "module-a"], function(injected1, injected2) {
         a1 = injected1;
         a2 = injected2;
+        return 'returned';
       });
 
       expect(a1).to.be.equal('valueForModuleA');
       expect(a2).to.be.equal('valueForModuleA');
+      expect(b).to.be.equal('returned');
 
     });
 
@@ -55,13 +72,15 @@ describe("Esquire inject", function() {
 
       var a;
       var b;
-      new Esquire().inject(["module-a", "module-b"], function(injected1, injected2) {
+      var c = new Esquire().inject(["module-a", "module-b"], function(injected1, injected2) {
         a = injected1;
         b = injected2;
+        return 'returned';
       });
 
       expect(a).to.be.equal('valueForModuleA');
       expect(b).to.be.match(/^valueForModuleB => /);
+      expect(c).to.be.equal('returned');
 
     });
 
