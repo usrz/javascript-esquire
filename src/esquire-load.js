@@ -12,16 +12,27 @@
     var chain = [];
 
     var resolve = function(success) {
-      if (status == 0) {
-        result = success;
-        status = 1;
-        if (onSuccess) try {
-          result = onSuccess(result);
-        } catch (error) {
-          result = error;
-          status = -1;
+      if (success && (typeof(success.then) === 'function')) {
+        /* If we were given a "then-able" just call ourselves back */
+        success.then(function(success) {
+          resolve(success);
+        }, function(failure) {
+          reject(failure);
+        });
+
+      } else {
+        /* We were given a success, resolve immediately */
+        if (status == 0) {
+          result = success;
+          status = 1;
+          if (onSuccess) try {
+            result = onSuccess(result);
+          } catch (error) {
+            result = error;
+            status = -1;
+          }
+          notify(chain);
         }
-        notify(chain);
       }
     }
 
