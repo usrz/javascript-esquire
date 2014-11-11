@@ -242,6 +242,7 @@ describe("Esquire inject", function() {
       var name = moduleName();
 
       Esquire.define(name, function() {
+        expect(arguments.length).to.be.equal(0);
         return "module " + name;
       });
 
@@ -289,6 +290,87 @@ describe("Esquire inject", function() {
       Esquire.define(name, ["module-a", "module-b", function(a, b) {
         return "module " + name + ":" + a + "/" + b;
       }]);
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
+
+    });
+
+    /* -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
+
+    it('should define with an object and undefined dependencies', function() {
+      var name = moduleName();
+
+      Esquire.define({
+        name: name,
+        constructor: function() {
+          expect(arguments.length).to.be.equal(0);
+          return "module " + name;
+        }
+      });
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.equal("return module " + name);
+
+    });
+
+    it('should define with an object and empty dependencies', function() {
+      var name = moduleName();
+
+      Esquire.define({
+        name: name,
+        dependencies: [],
+        constructor: function() {
+          expect(arguments.length).to.be.equal(0);
+          return "module " + name;
+        }
+      });
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.equal("return module " + name);
+
+    });
+
+    it('should define with an object and single string dependency', function() {
+      var name = moduleName();
+
+      Esquire.define({
+        name: name,
+        dependencies: 'module-a',
+        constructor: function(a) {
+          expect(arguments.length).to.be.equal(1);
+          return "module " + name + ":" + a;
+        }
+      });
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.equal("return module " + name + ":valueForModuleA");
+
+    });
+
+    it('should define with an object and a dependencies array', function() {
+      var name = moduleName();
+
+      Esquire.define({
+        name: name,
+        dependencies: ['module-a', 'module-b'],
+        constructor: function(a, b) {
+          expect(arguments.length).to.be.equal(2);
+          return "module " + name + ":" + a + "/" + b;
+        }
+      });
 
       var result = esquire(name, function(dependency) {
         return "return " + dependency;

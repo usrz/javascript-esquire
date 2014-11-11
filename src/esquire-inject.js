@@ -128,6 +128,18 @@
    * @returns {Module} The new {@link Module} created by this call.
    */
   function define() {
+
+    /* Object based definition */
+    if ((arguments.length == 1)
+      && arguments[0].name
+      && arguments[0].constructor) {
+        var module = arguments[0];
+        return define(module.name,
+                      module.dependencies || [], //optional
+                      module.constructor);
+    }
+
+    /* Normal arguments-based definition */
     var args = normalize(arguments);
 
     /* Our variables */
@@ -138,9 +150,6 @@
     /* Name and dependencies */
     if (!args.arguments.length) {
       throw new EsquireError("No module name specified");
-    } else if ((arguments.length == 1) && arguments[0].name && arguments[0].constructor) {
-      var module = arguments[0];
-      return define(module.name, module.dependencies, module.constructor);
     } else {
       name = args.arguments.splice(0, 1)[0];
       dependencies = args.arguments;
