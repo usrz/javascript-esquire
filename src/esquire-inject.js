@@ -192,13 +192,13 @@
      * var foo = esq.require('fooModule');
      * // 'foo' will be an instance of 'fooModule'
      *
-     * var instances = esq.require(['barModule', 'bazModule']);
-     * // instances[0] will be an instance of 'barModule'
-     * // instances[1] will be an instance of 'bazModule'
+     * var fromArray = esq.require(['barModule', 'bazModule']);
+     * // fromArray[0] will be an instance of 'barModule'
+     * // fromArray[1] will be an instance of 'bazModule'
      *
-     * var fromArgs = esq.require('barModule', 'bazModule');
-     * // fromArgs[0] will be an instance of 'barModule'
-     * // fromArgs[1] will be an instance of 'bazModule'
+     * var fromArgs = esq.require('abcModule', 'xyzModule');
+     * // fromArgs[0] will be an instance of 'abcModule'
+     * // fromArgs[1] will be an instance of 'xyzModule'
      * @param {string[]|string} dependencies - An array of required module names
      *                                         (or a single module name) whose
      *                                         instance are to be returned.
