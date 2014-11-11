@@ -1,6 +1,6 @@
 'use strict';
 
-(function(window) {
+(function EsquireScript(window) {
 
   /* Flatten an array, or array of array, for aguments */
   function flatten(iterable) {
@@ -25,6 +25,37 @@
   /* ======================================================================== */
 
   var modules = {};
+
+  /**
+   * @class Module
+   * @classdesc The definition of an {@link Esquire} module
+   */
+  function Module(name, dependencies, constructor) {
+    /**
+     * The name of this {@link Module}
+     * @member {string} name
+     * @memberof Module
+     * @readonly
+     */
+    Object.defineProperty(this, 'name', { enumerable: true, configurable: false, value: name });
+
+    /**
+     * The name of all dependencies required by this {@link Module} (in order).
+     * @member {string[]} dependencies
+     * @memberof Module
+     * @readonly
+     */
+    Object.defineProperty(this, 'dependencies', { enumerable: true, configurable: false, value: dependencies });
+
+    /**
+     * The constructor function creating instances of this {@link Module}.
+     * @member {function} constructor
+     * @memberof Module
+     * @readonly
+     */
+    Object.defineProperty(this, 'constructor', { enumerable: true, configurable: false, value: constructor });
+
+  }
 
   /**
    * Define a module as available to Esquire
@@ -66,10 +97,7 @@
 
     /* Remember our module */
     console.debug("Esquire: Defining module '" + name + "'");
-    modules[name] = Object.freeze({
-      dependencies: dependencies,
-      constructor: constructor
-    });
+    modules[name] = new Module(name, dependencies, constructor);
 
   };
 
@@ -167,6 +195,10 @@
      * var instances = esq.require(['barModule', 'bazModule']);
      * // instances[0] will be an instance of 'barModule'
      * // instances[1] will be an instance of 'bazModule'
+     *
+     * var fromArgs = esq.require('barModule', 'bazModule');
+     * // fromArgs[0] will be an instance of 'barModule'
+     * // fromArgs[1] will be an instance of 'bazModule'
      * @param {string[]|string} dependencies - An array of required module names
      *                                         (or a single module name) whose
      *                                         instance are to be returned.
@@ -176,13 +208,13 @@
      *                           module instance, if this method was called
      *                           with a single `string` parameter.
      */
-    function require(dependencies) {
-      if ((arguments.length == 1) && (typeof(dependencies) == 'string')) {
-        return inject([dependencies], function(instance) {
+    function require() {
+      if ((arguments.length == 1) && (typeof(arguments[0]) == 'string')) {
+        return inject([arguments[0]], function(instance) {
           return instance;
         });
       } else {
-        dependencies = flatten(arguments);
+        var dependencies = flatten(arguments);
         return inject(dependencies, function() {
           var result = [];
           for (var i = 0; i < arguments.length; i ++) {
@@ -232,7 +264,7 @@
       /* Flatten/convert our dependencies */
       dependencies = flatten(dependencies);
 
-      /* Create a fake "$inject$" module, and create it */
+      /* Create a fake unnamed module, and inject the callback function */
       return create(null, [], { dependencies: dependencies, constructor: callback });
     };
 
@@ -249,19 +281,14 @@
   /* ======================================================================== */
 
   Object.defineProperties(Esquire, {
-    "define":  { enumerable: true, configurable: false, value: define },
-    "$$script":  { enumerable: false, configurable: false, get: function() {
-      var script = "(function(s){\n  var modules={};";
-      script += "\n  s.Esquire=" + Esquire.toString();
-      script += "\n  s.Esquire.define=" + define.toString();
-      script += "\n})(self);";
-      return script;
-    }},
+    "define":   { enumerable: true,  configurable: false, value: define },
+    "$$script": { enumerable: false, configurable: false, value: EsquireScript.toString() },
 
     /**
      * An unmodifiable dictionary of all modules known by {@link Esquire}.
      *
      * @static
+     * @readonly
      * @member modules
      * @memberof Esquire
      * @example -
@@ -352,8 +379,5 @@
     return staticEsquire.require(arguments);
 
   };
-
-
-
 
 })(self);
