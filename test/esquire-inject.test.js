@@ -232,6 +232,76 @@ describe("Esquire inject", function() {
 
   /* ======================================================================== */
 
+  describe("module definition", function() {
+
+    function moduleName() {
+      return "random_" + Math.floor(Math.random() * 999999999);
+    }
+
+    it('should define with only name and function', function() {
+      var name = moduleName();
+
+      Esquire.define(name, function() {
+        return "module " + name;
+      });
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.equal("return module " + name);
+
+    });
+
+    it('should define with name, string dependency and function', function() {
+      var name = moduleName();
+
+      Esquire.define(name, "module-a", function(a) {
+        return "module " + name + ":" + a;
+      });
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.equal("return module " + name + ":valueForModuleA");
+
+    });
+
+    it('should define with name, dependencies array and function', function() {
+      var name = moduleName();
+
+      Esquire.define(name, ["module-a", "module-b"], function(a, b) {
+        return "module " + name + ":" + a + "/" + b;
+      });
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
+
+    });
+
+    it('should define with AngularJS arguments', function() {
+      var name = moduleName();
+
+      Esquire.define(name, ["module-a", "module-b", function(a, b) {
+        return "module " + name + ":" + a + "/" + b;
+      }]);
+
+      var result = esquire(name, function(dependency) {
+        return "return " + dependency;
+      })
+
+      expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
+
+    });
+
+  });
+
+  /* ======================================================================== */
+
   describe("failures", function() {
 
     it('should fail injecting an unknown module', function() {
