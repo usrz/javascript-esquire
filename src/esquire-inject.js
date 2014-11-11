@@ -362,8 +362,9 @@
   /* ======================================================================== */
 
   Object.defineProperties(Esquire, {
-    "define":   { enumerable: true,  configurable: false, value: define },
-    "$$script": { enumerable: false, configurable: false, value: EsquireScript.toString() },
+    "define":      { enumerable: true,  configurable: false, value: define },
+    "$$normalize": { enumerable: false, configurable: false, value: normalize },
+    "$$script":    { enumerable: false, configurable: false, value: EsquireScript.toString() },
 
     /**
      * An unmodifiable dictionary of all {@link Module}s known by
