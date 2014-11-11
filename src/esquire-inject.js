@@ -9,9 +9,11 @@
     var array = [];
     for (var i = 0; i < iterable.length; i ++) {
       var current = iterable[i];
-      if (typeof(current) == 'string') {
+      if (typeof(current) === 'string') {
         array.push(current);
-      } else if (Array.isArray(current)) {
+      } else if (typeof(current) === 'function') {
+        array.push(current);
+      } else if (typeof(current) === 'object') {
         array = array.concat(flatten(current));
       } else {
         throw new EsquireError("Invalid dependency: " + current);
@@ -19,6 +21,39 @@
     }
     return array;
   };
+
+  /* Normalize and validate an array into a array/function object */
+  function normalize() {
+    var array = flatten(arguments);
+
+    /* The normalized structure */
+    var normalized = {
+      arguments: [],
+      function: null
+    };
+
+    /* No elements in the array? Empty */
+    if (! array.length) return normalized;
+
+    /* Set the function only if it's the last element */
+    if (typeof(array[array.length - 1]) === 'function') {
+      normalized.function = array.splice(-1)[0];
+    }
+
+    /* Validate all arguments as strings */
+    for (var i in array) {
+      var argument = array[i];
+      if (typeof(argument) === 'string') {
+        normalized.arguments.push(argument);
+      } else {
+        throw new EsquireError("Found " + typeof(argument) + " but needed string: " + argument);
+      }
+    }
+
+    /* Return our normalized structure */
+    return normalized;
+
+  }
 
   /* ======================================================================== */
   /* Module definitor, exposed as a static method on the Esquire class        */
@@ -72,33 +107,60 @@
    *   };
    *   return new Foo(a, b);
    * });
+   *
+   * @example Definition with a {@link Module}-like object also works.
+   * Esquire.define({
+   *   name: 'foo',
+   *   dependencies: ['modA', 'depB'],
+   *   constructor: function(a, b) {
+   *     // ...
+   *   }
+   * });
+   *
    * @param {string}   name - The name of the module to define.
-   * @param {string[]} dependencies - An array of required module names whose
-   *                                  instances will be passed to the
-   *                                  `constructor(...)` method.
+   * @param {string[]} [dependencies] - An array of required module names whose
+   *                                    instances will be passed to the
+   *                                    `constructor(...)` method.
    * @param {function} constructor - A function that will be invoked once per
    *                                 each {@link Esquire} instance. Its return
    *                                 value will be injected in any other module
    *                                 requiring this module as a dependency.
+   * @returns {Module} The new {@link Module} created by this call.
    */
-  function define(name, dependencies, constructor) {
+  function define() {
+    var args = normalize(arguments);
 
-    /* Basic checks */
-    if (typeof(name) != 'string') {
-      throw new EsquireError("Invalid module name: " + name);
-    } else if (modules[name]) {
-      throw new EsquireError("Module '" + name + "' already defined");
-    } else if (typeof(constructor) != 'function') {
-      throw new EsquireError("Constructor for module '" + name + "' is not a function: " + constructor);
+    /* Our variables */
+    var name;
+    var dependencies;
+    var constructor;
+
+    /* Name and dependencies */
+    if (!args.arguments.length) {
+      throw new EsquireError("No module name specified");
+    } else if ((arguments.length == 1) && arguments[0].name && arguments[0].constructor) {
+      var module = arguments[0];
+      return define(module.name, module.dependencies, module.constructor);
+    } else {
+      name = args.arguments.splice(0, 1)[0];
+      dependencies = args.arguments;
     }
 
-    /* Flatten our dependencies */
-    dependencies = flatten(dependencies);
+    /* Constructor function */
+    if (!args.function) {
+      throw new EsquireError("No constructor function specified for module '" + name + "'");
+    } else {
+      constructor = args.function;
+    }
 
-    /* Remember our module */
-    console.debug("Esquire: Defining module '" + name + "'");
+    /* Watch out for double definitions */
+    if (modules[name]) {
+      throw new EsquireError("Module '" + name + "' already defined");
+    }
+
+    /* Remember and return a new module */
     modules[name] = new Module(name, dependencies, constructor);
-
+    return modules[name];
   };
 
   /* ======================================================================== */
@@ -189,40 +251,43 @@
      * @example -
      * var esq = new Esquire();
      *
-     * var foo = esq.require('fooModule');
-     * // 'foo' will be an instance of 'fooModule'
+     * var fromArray = esq.require(['fooModule', 'barModule']);
+     * // fromArray[0] will be an instance of 'fooModule'
+     * // fromArray[1] will be an instance of 'barModule'
      *
-     * var fromArray = esq.require(['barModule', 'bazModule']);
-     * // fromArray[0] will be an instance of 'barModule'
-     * // fromArray[1] will be an instance of 'bazModule'
+     * @example Injection with a single `string` argument
+     * var fromString = esq.require('bazModule');
+     * // 'fromString' will be an instance of 'bazModule'
      *
+     * @example Injection with a number of different arguments
      * var fromArgs = esq.require('abcModule', 'xyzModule');
      * // fromArgs[0] will be an instance of 'abcModule'
      * // fromArgs[1] will be an instance of 'xyzModule'
+     *
      * @param {string[]|string} dependencies - An array of required module names
      *                                         (or a single module name) whose
      *                                         instance are to be returned.
-     * @param {string} [...] - Any other module name, as arguments, to support
-     *                         calls like `require('barModule', 'bazModule')`
      * @return {object[]|object} An array of module instances, or a single
      *                           module instance, if this method was called
      *                           with a single `string` parameter.
      */
     function require() {
+
+      /* Edge case, one only parameter, we don't return an array */
       if ((arguments.length == 1) && (typeof(arguments[0]) == 'string')) {
         return inject([arguments[0]], function(instance) {
           return instance;
         });
-      } else {
-        var dependencies = flatten(arguments);
-        return inject(dependencies, function() {
-          var result = [];
-          for (var i = 0; i < arguments.length; i ++) {
-            result.push(arguments[i]);
-          }
-          return result;
-        });
       }
+
+      /* Inject a fake callback function returning an array */
+      return inject(arguments, function() {
+        var result = [];
+        for (var i = 0; i < arguments.length; i ++) {
+          result.push(arguments[i]);
+        }
+        return result;
+      });
       return result;
     }
 
@@ -234,10 +299,24 @@
      * @memberof Esquire
      * @example -
      * var esq = new Esquire();
+     *
      * esq.inject(['modA', 'depB'], function(a, b) {
      *   // 'a' will be an instance of 'modA'
      *   // 'b' will be an instance of 'depB'
      * });
+     *
+     * @example Injection also works without arrays (only arguments)
+     * esq.inject('modA', 'depB', function(a, b) {
+     *   // 'a' will be an instance of 'modA'
+     *   // 'b' will be an instance of 'depB'
+     * });
+     *
+     * @example Angular-JS style injection (one big array) is supported, too
+     * esq.inject(['modA', 'depB', function(a, b) {
+     *   // 'a' will be an instance of 'modA'
+     *   // 'b' will be an instance of 'depB'
+     * }]);
+     *
      * @param {string[]|string} [dependencies] - An array of required module
      *                                           names whose instances will be
      *                                           passed to the `callback(...)`
@@ -248,24 +327,17 @@
      * @return Whatever value was returned by the `callback` function.
      */
     function inject(dependencies, callback) {
+      var args = normalize(arguments);
 
-      /* Sanity check, null callback just create... */
-      if (callback == null) {
-        if (typeof(dependencies) === 'function') {
-          callback = dependencies;
-          dependencies = [];
-        } else {
-          callback = function() {} // return undefined!
-        }
-      } else if (typeof(callback) != 'function') {
-        throw new EsquireError("Injection callback is not a function: " + callback);
+      /* Sanity check, need a callback */
+      if (!args.function) {
+        throw new EsquireError("Callback for injection unspecified");
       }
 
-      /* Flatten/convert our dependencies */
-      dependencies = flatten(dependencies);
+      /* Create a fake "null" module and return its value */
+      var module = new Module(null, args.arguments, args.function);
+      return create(module.name, [], module);
 
-      /* Create a fake unnamed module, and inject the callback function */
-      return create(null, [], { dependencies: dependencies, constructor: callback });
     };
 
     /* Define our members */
@@ -285,19 +357,22 @@
     "$$script": { enumerable: false, configurable: false, value: EsquireScript.toString() },
 
     /**
-     * An unmodifiable dictionary of all modules known by {@link Esquire}.
+     * An unmodifiable dictionary of all {@link Module}s known by
+     * {@link Esquire}.
      *
      * @static
      * @readonly
-     * @member modules
+     * @member {Object.<string,Module>} modules
      * @memberof Esquire
      * @example -
      * {
      *   "modA": {
+     *     "name": "modA",
      *     "dependencies": [ ... ],
      *     "constructor": function(...) { ... }
      *   },
      *   "depB": {
+     *     "name": "depB",
      *     "dependencies": [ ... ],
      *     "constructor": function(...) { ... }
      *   },

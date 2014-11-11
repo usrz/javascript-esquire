@@ -39,6 +39,8 @@ describe("Esquire inject", function() {
 
     });
 
+    /* -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
+
     it('should inject a single module', function() {
 
       var a;
@@ -83,6 +85,40 @@ describe("Esquire inject", function() {
       expect(c).to.be.equal('returned');
 
     });
+
+    it('should inject with arguments', function() {
+
+      var a;
+      var b;
+      var c = new Esquire().inject("module-a", "module-b", function(injected1, injected2) {
+        a = injected1;
+        b = injected2;
+        return 'returned';
+      });
+
+      expect(a).to.be.equal('valueForModuleA');
+      expect(b).to.be.match(/^valueForModuleB => /);
+      expect(c).to.be.equal('returned');
+
+    })
+
+    it('should inject with AngularJS array', function() {
+
+      var a;
+      var b;
+      var c = new Esquire().inject(["module-a", "module-b", function(injected1, injected2) {
+        a = injected1;
+        b = injected2;
+        return 'returned';
+      }]);
+
+      expect(a).to.be.equal('valueForModuleA');
+      expect(b).to.be.match(/^valueForModuleB => /);
+      expect(c).to.be.equal('returned');
+
+    })
+
+    /* -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
 
     it('should require a single module', function() {
 
