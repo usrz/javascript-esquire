@@ -90,6 +90,9 @@
      */
     Object.defineProperty(this, 'constructor', { enumerable: true, configurable: false, value: constructor });
 
+    /* Freeze ourselves */
+    Object.freeze(this);
+
   }
 
   /**
@@ -391,9 +394,23 @@
     "modules": { enumerable: true, configurable: false, get: function() {
       var clone = {};
       for (var name in modules) {
-        clone[name] = Object.freeze(modules[name]);
+        clone[name] = modules[name];
       }
       return Object.freeze(clone);
+    }},
+
+    /**
+     * Return the {@link Module} associated with the given `name` as defined
+     * in {@link Esquire} or `null`.
+     *
+     * @static
+     * @function module
+     * @param {string} name - The name of the {@link Module} to return.
+     * @memberof Esquire
+     * @returns {Module} The {@link Module} or `null`
+     */
+    "module": { enumerable: true, configurable: false, value: function(name) {
+      return modules[name] || null;
     }}
   });
 

@@ -384,6 +384,38 @@ describe("Esquire inject", function() {
 
   /* ======================================================================== */
 
+  describe("modules", function() {
+    it('should return a dictonary of modules', function() {
+      var modules = Esquire.modules;
+      expect(modules['circular-a'].name   ).to.equal('circular-a');
+      expect(modules['circular-b'].name   ).to.equal('circular-b');
+      expect(modules['circular-c'].name   ).to.equal('circular-c');
+      expect(modules['circular-d'].name   ).to.equal('circular-d');
+      expect(modules['circular-e'].name   ).to.equal('circular-e');
+      expect(modules['circular-f'].name   ).to.equal('circular-f');
+      expect(modules['circular-g'].name   ).to.equal('circular-g');
+      expect(modules['circular-self'].name).to.equal('circular-self');
+      expect(modules['module-a'].name     ).to.equal('module-a');
+      expect(modules['module-b'].name     ).to.equal('module-b');
+    });
+
+    it('should return the same module', function() {
+      var modules = Esquire.modules;
+      expect(modules['circular-a']   ).to.equal(Esquire.module('circular-a'));
+      expect(modules['circular-b']   ).to.equal(Esquire.module('circular-b'));
+      expect(modules['circular-c']   ).to.equal(Esquire.module('circular-c'));
+      expect(modules['circular-d']   ).to.equal(Esquire.module('circular-d'));
+      expect(modules['circular-e']   ).to.equal(Esquire.module('circular-e'));
+      expect(modules['circular-f']   ).to.equal(Esquire.module('circular-f'));
+      expect(modules['circular-g']   ).to.equal(Esquire.module('circular-g'));
+      expect(modules['circular-self']).to.equal(Esquire.module('circular-self'));
+      expect(modules['module-a']     ).to.equal(Esquire.module('module-a'));
+      expect(modules['module-b']     ).to.equal(Esquire.module('module-b'));
+    });
+  });
+
+  /* ======================================================================== */
+
   describe("failures", function() {
 
     it('should fail injecting an unknown module', function() {
