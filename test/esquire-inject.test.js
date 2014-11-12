@@ -223,8 +223,30 @@ describe("Esquire inject", function() {
       var b = e.require("module-b");
       var c = e.require("module-c");
 
+      expect(c['a']).to.equal('valueForModuleA');
+      expect(c['b']).to.match(/^valueForModuleB => /);
+
       expect(c['a']).to.equal(a);
       expect(c['b']).to.equal(b);
+
+    });
+
+    it('should share instances with module with transitive dependencies', function() {
+
+      var e = new Esquire();
+
+      var a = e.require("module-a");
+      var b = e.require("module-b");
+      var c = e.require("module-c");
+      var d = e.require("module-d");
+
+      expect(c['a']).to.equal('valueForModuleA');
+      expect(c['b']).to.match(/^valueForModuleB => /);
+
+      expect(c['a']).to.equal(a);
+      expect(c['b']).to.equal(b);
+
+      expect(d.transitive).to.equal(c);
 
     });
 
@@ -384,7 +406,8 @@ describe("Esquire inject", function() {
 
   /* ======================================================================== */
 
-  describe("modules", function() {
+  describe("static methods", function() {
+
     it('should return a dictonary of modules', function() {
       var modules = Esquire.modules;
       expect(modules['circular-a'].name   ).to.equal('circular-a');
@@ -412,6 +435,33 @@ describe("Esquire inject", function() {
       expect(modules['module-a']     ).to.equal(Esquire.module('module-a'));
       expect(modules['module-b']     ).to.equal(Esquire.module('module-b'));
     });
+
+    it('should resolve empty dependencies', function() {
+      var dependencies = Esquire.resolve('module-a');
+      expect(dependencies).to.be.empty;
+    });
+
+    it('should resolve valid dependencies', function() {
+      var dependencies = Esquire.resolve('module-c');
+      expect(dependencies.length).to.equal(2);
+      expect(dependencies[0]).to.equal(Esquire.module('module-a'));
+      expect(dependencies[1]).to.equal(Esquire.module('module-b'));
+    });
+
+    it('should resolve direct dependencies', function() {
+      var dependencies = Esquire.resolve('module-d');
+      expect(dependencies.length).to.equal(1);
+      expect(dependencies[0]).to.equal(Esquire.module('module-c'));
+    });
+
+    it('should resolve transitive dependencies', function() {
+      var dependencies = Esquire.resolve('module-d', true);
+      expect(dependencies.length).to.equal(3);
+      expect(dependencies[0]).to.equal(Esquire.module('module-c'));
+      expect(dependencies[1]).to.equal(Esquire.module('module-a'));
+      expect(dependencies[2]).to.equal(Esquire.module('module-b'));
+    });
+
   });
 
   /* ======================================================================== */

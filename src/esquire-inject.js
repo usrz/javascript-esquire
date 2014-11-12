@@ -13,7 +13,12 @@
         array.push(current);
       } else if (typeof(current) === 'function') {
         array.push(current);
-      } else if (typeof(current) === 'object') {
+      } else if (Array.isArray(current)) {
+        array = array.concat(flatten(current));
+      } else if ((typeof(current) === 'object')
+              && (typeof(current.length) === 'number')) {
+        // JavaScripts' "arguments" is an object, not an array, and on top of
+        // that PhantomJS' own implementation is not iterable... Workaround!
         array = array.concat(flatten(current));
       } else {
         throw new EsquireError("Invalid dependency: " + current);
@@ -56,10 +61,38 @@
   }
 
   /* ======================================================================== */
-  /* Module definitor, exposed as a static method on the Esquire class        */
+  /* Errors                                                                   */
   /* ======================================================================== */
 
-  var modules = {};
+  function EsquireError(message, dependencyStack) {
+    message = "Esquire: " + (message || "Unknown error");
+    var dependencies = "";
+    if (dependencyStack && (dependencyStack.length)) { // 0 is always null
+      for (var i = 1; i < dependencyStack.length; i ++) {
+        if (dependencyStack[i]) {
+          dependencies += " -> " + dependencyStack[i];
+        }
+      }
+    }
+    if (dependencies) message += " resolving" + dependencies;
+
+    this.constructor.prototype.__proto__ = Error.prototype;
+    Error.call(this, message);
+    this.name = "EsquireError";
+    this.message = message;
+  }
+
+  function NoModuleError(name, dependencyStack) {
+    EsquireError.call(this, "Module '" + name + "' not found", dependencyStack);
+  };
+
+  function CircularDependencyError(name, dependencyStack) {
+    EsquireError.call(this, "Module '" + name + "' has circular dependencies", dependencyStack);
+  };
+
+  /* ======================================================================== */
+  /* Module class definition                                                  */
+  /* ======================================================================== */
 
   /**
    * @class Module
@@ -95,8 +128,15 @@
 
   }
 
+  /* ======================================================================== */
+  /* Stuff exposed statically on the Exquire class                            */
+  /* ======================================================================== */
+
+  /* Static list of known modules */
+  var modules = {};
+
   /**
-   * Define a module as available to Esquire
+   * Define a {@link Module} as available to Esquire
    *
    * @static
    * @function define
@@ -175,32 +215,78 @@
     return modules[name];
   };
 
-  /* ======================================================================== */
-  /* Esquire constructor                                                      */
-  /* ======================================================================== */
+  /**
+   * Return an array of {@link Module} dependencies for a {@link Module}.
+   *
+   * @static
+   * @function resolve
+   * @memberof Esquire
+   * @param {string|Module} module - The {@link Module} (or its name) for which
+   *                                 dependendencies should be resolved.
+   * @param {boolean} [transitive] - If `true` all direct and indirect
+   *                                 _(transitive)_ dependencies will be
+   *                                 resolved. If `false` or _undefined_, only
+   *                                 the {@link Module}'s explicit dependencies
+   *                                 will be resolved.
+   * @returns {Module[]} An array of all required {@link Module}s.
+   */
+  function resolve(module, transitive, dependencyStack) {
 
-  function EsquireError(message, dependencyStack) {
-    message = "Esquire: " + (message || "Unknown error");
-    if (dependencyStack && (dependencyStack.length > 1)) { // 0 is always null
-      message += " resolving"
-      for (var i = 1; i < dependencyStack.length; i ++) {
-        message += " -> '" + dependencyStack[i] + "'";
+    /* Check parameters */
+    if (!dependencyStack) dependencyStack = [];
+    if (!module) throw new EsquireError("No module or module name specified");
+    if (typeof(module) === 'string') {
+      if (modules[module]) {
+        module = modules[module];
+      } else {
+        throw new NoModuleError(name, dependencyStack);
       }
     }
 
-    this.constructor.prototype.__proto__ = Error.prototype;
-    Error.call(this, message);
-    this.name = "EsquireError";
-    this.message = message;
+    /* Check recursion */
+    if (dependencyStack.indexOf(module.name) >= 0) {
+      throw new CircularDependencyError(module.name, dependencyStack);
+    }
+
+    /* The dependencies to return */
+    var moduleDependencies = [];
+
+    /* Recurse into module */
+    dependencyStack.push(module.name);
+    for (var i in module.dependencies) {
+
+      /* Check this module's dependency */
+      var dependencyName = module.dependencies[i];
+      var dependency = modules[dependencyName];
+      if (dependency) {
+        /* Add the dependency */
+        moduleDependencies.push(dependency);
+
+        /* If transitive, recurse */
+        if (transitive) {
+          var dependencies = resolve(dependency, dependencyStack);
+          for (var name in dependencies) {
+            moduleDependencies.push(dependencies[name]);
+          }
+        }
+      } else {
+
+        /* Dependency not found */
+        throw new NoModuleError(module.dependencies[i], dependencyStack);
+      }
+    }
+
+    /* Pop ourselves out */
+    dependencyStack.pop();
+
+    /* Return our resolved module dependencies */
+    return moduleDependencies;
+
   }
 
-  function NoModuleError(name, dependencyStack) {
-    EsquireError.call(this, "Module '" + name + "' not found");
-  };
-
-  function CircularDependencyError(name, dependencyStack) {
-    EsquireError.call(this, "Module '" + name + "' has circular dependencies");
-  };
+  /* ======================================================================== */
+  /* Esquire constructor                                                      */
+  /* ======================================================================== */
 
   /**
    * Create a new {@link Esquire} injector instance.
@@ -224,32 +310,34 @@
     var cache = {};
 
     /* Create a new instance from a defined module */
-    function create(name, dependencyStack, module) {
+    function create(module, dependencyStack) {
 
-      /* Check the cache (nulls are allowed, too) */
-      if (name && cache.hasOwnProperty(name)) return cache[name];
+      /* Already in cache? Why even bother? */
+      if (cache[module.name]) return cache[module.name];
 
-      /* If not specified, look for a module */
-      if (! module) module = modules[name];
-      if (! module) throw new NoModuleError(name, dependencyStack);
-
-      /* Check for circular dependencies */
-      if (dependencyStack.indexOf(name) >= 0) {
-        throw new CircularDependencyError(name, dependencyStack);
-      }
-
-      /* Process each dependency */
+      /* Calculate the module's direct dependencies */
+      var dependencies = resolve(module, false, dependencyStack);
       var parameters = [];
-      dependencyStack.push(name);
-      for (var i in module.dependencies) {
-        parameters.push(create(module.dependencies[i], dependencyStack));
-      }
-      dependencyStack.pop();
 
-      /* Call our constructor, the caller will cache it */
-      if (name) console.debug("Esquire: Instantiating module '" + name + "'");
+      for (var i in dependencies) {
+        var dependency = dependencies[i];
+
+        /* Already in cache? Just push it! */
+        if (cache[dependency.name]) {
+          parameters.push(cache[dependency.name]);
+        } else {
+
+          /* Not in cache, create (recursively) the dependency */
+          dependencyStack.push(module.name);
+          parameters.push(create(dependency, dependencyStack));
+          dependencyStack.pop();
+        }
+
+      }
+
+      /* Invoke the constructor */
       var instance = module.constructor.apply(null, parameters);
-      if (name) cache[name] = instance;
+      if (module.name) cache[module.name] = instance;
       return instance;
 
     }
@@ -348,7 +436,7 @@
 
       /* Create a fake "null" module and return its value */
       var module = new Module(null, args.arguments, args.function);
-      return create(module.name, [], module);
+      return create(module, []);
 
     };
 
@@ -366,6 +454,7 @@
 
   Object.defineProperties(Esquire, {
     "define":      { enumerable: true,  configurable: false, value: define },
+    "resolve":     { enumerable: true,  configurable: false, value: resolve },
     "$$normalize": { enumerable: false, configurable: false, value: normalize },
     "$$script":    { enumerable: false, configurable: false, value: EsquireScript.toString() },
 
