@@ -335,7 +335,7 @@
      *                              with each instance as a parameter.
      * @return Whatever value was returned by the `callback` function.
      */
-    function inject(dependencies, callback) {
+    function inject() {
       var args = normalize(arguments);
 
       /* Sanity check, need a callback */
@@ -448,20 +448,19 @@
    */
   window.esquire = function() {
     /* No arguments? Ignore */
-    if (arguments.length == 0) return undefined;
-
-    /* Could someone have done esquire(function(...) {} ??? */
-    if ((arguments.length == 1) && (typeof(arguments[0]) == 'function')) {
-      throw new EsquireError("Invalid parameter for static injection");
+    if (arguments.length == 0) {
+      throw new EsquireError("No dependencies/callback specified");
     }
 
-    /* Two arguments: esquire("a", "b") or esquire(['deps'], function() {}) */
-    if ((arguments.length == 2) && (typeof(arguments[1]) == 'function')) {
-      return staticEsquire.inject(arguments[0], arguments[1]);
-    }
+    /* Normalize our arguments */
+    var args = normalize(arguments);
 
-    /* More than two arguments? Just a list of strings */
-    return staticEsquire.require(arguments);
+    /* Inject or require? */
+    if (args.function) {
+      return staticEsquire.inject(args.arguments, args.function);
+    } else {
+      return staticEsquire.require(args.arguments);
+    }
 
   };
 
