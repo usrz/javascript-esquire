@@ -161,6 +161,22 @@ describe("Esquire inject", function() {
 
     });
 
+    it('should expose a $window module', function() {
+
+      var w = new Esquire().require("$window");
+      expect(w).to.be.equal(window);
+
+    });
+
+    it('should expose a $esquire module', function() {
+
+      var e1 = new Esquire();
+      var e2 = e1.require("$esquire");
+      expect(e1).to.be.equal(e2);
+      expect(e1 === e2).to.be.true;
+
+    });
+
   });
 
   /* ======================================================================== */
@@ -199,6 +215,33 @@ describe("Esquire inject", function() {
       expect(a[0]).to.equal(a[1]);
 
     });
+
+    it('should share the same $window instance', function() {
+
+      var w1 = new Esquire().require("$window");
+      var w2 = new Esquire().require("$window");
+      expect(w1).to.be.equal(window);
+      expect(w2).to.be.equal(window);
+      expect(w1 === w2).to.be.true;
+
+    });
+
+    it('should expose two separate $esquire instances', function() {
+
+      var e1 = new Esquire();
+      var e1e = e1.require("$esquire");
+
+      var e2 = new Esquire();
+      var e2e = e2.require("$esquire");
+
+      expect(e1).to.be.equal(e1e);
+      expect(e2).to.be.equal(e2e);
+      expect(e1 === e1e).to.be.true;
+      expect(e2 === e2e).to.be.true;
+      expect(e1).not.to.be.equal(e2);
+
+    });
+
 
   });
 

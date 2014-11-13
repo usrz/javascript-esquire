@@ -133,7 +133,14 @@
   /* ======================================================================== */
 
   /* Static list of known modules */
-  var modules = {};
+  var modules = {
+    "$window": new Module("$window", [], function() {
+      throw new EsquireError("The constructor for '$window' should not be called'")
+     }),
+    "$esquire": new Module("$esquire", [], function() {
+      throw new EsquireError("The constructor for '$esquire' should not be called'")
+     })
+  };
 
   /**
    * Define a {@link Module} as available to Esquire
@@ -307,7 +314,7 @@
     if (!(this instanceof Esquire)) return new Deferred();
 
     /* Our and cache */
-    var cache = {};
+    var cache = { "$window": window, "$esquire": this };
 
     /* Create a new instance from a defined module */
     function create(module, dependencyStack) {
@@ -570,4 +577,4 @@
 
   };
 
-})(self);
+})(window);

@@ -1,6 +1,6 @@
 'use strict';
 
-(function() {
+(function(window) {
 
   /* ======================================================================== */
   /* A quick-and-dirty Promise-like ThenAble                                  */
@@ -266,4 +266,4 @@
   window.Esquire.load = load;
 
 
-})();
+})(window);
