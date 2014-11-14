@@ -76,7 +76,6 @@
     }
     if (dependencies) message += " resolving" + dependencies;
 
-    this.constructor.prototype.__proto__ = Error.prototype;
     Error.call(this, message);
     this.name = "EsquireError";
     this.message = message;
@@ -89,6 +88,13 @@
   function CircularDependencyError(name, dependencyStack) {
     EsquireError.call(this, "Module '" + name + "' has circular dependencies", dependencyStack);
   };
+
+  EsquireError.prototype = new Error;
+  EsquireError.prototype.name = 'EsquireError';
+  NoModuleError.prototype = new EsquireError;
+  NoModuleError.prototype.name = 'NoModuleError';
+  CircularDependencyError.prototype = new EsquireError;
+  CircularDependencyError.prototype.name = 'CircularDependencyError';
 
   /* ======================================================================== */
   /* Module class definition                                                  */
