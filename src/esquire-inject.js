@@ -21,7 +21,7 @@
         // that PhantomJS' own implementation is not iterable... Workaround!
         array = array.concat(flatten(current));
       } else {
-        throw new EsquireError("Invalid dependency: " + current);
+        throw new EsquireError("Invalid dependency: " + JSON.stringify(current));
       }
     }
     return array;
@@ -128,6 +128,13 @@
      * @readonly
      */
     Object.defineProperty(this, 'constructor', { enumerable: true, configurable: false, value: constructor });
+
+    /* Hidden $$script for injection */
+    Object.defineProperty(this, '$$script', { enumerable: false, configurable: false, get: function() {
+      return 'Esquire.define(' + JSON.stringify(this.name)
+                         + ',' + JSON.stringify(this.dependencies)
+                         + ',' + constructor.toString() + ');'
+    }});
 
     /* Freeze ourselves */
     Object.freeze(this);
