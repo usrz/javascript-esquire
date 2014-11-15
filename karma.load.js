@@ -18,11 +18,10 @@ module.exports = function(config) {
 
     /* These need to be in order */
     files: [
-
       'src/esquire-load.js',
       'test/esquire-load.test.js',
 
-      /* Loaded */
+      /* To be loaded by Esquire */
       { pattern: 'test/**/*.js',   included: false },
       { pattern: 'test/**/*.html', included: false },
     ],
