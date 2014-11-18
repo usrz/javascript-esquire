@@ -5,7 +5,8 @@ describe("Esquire inject", function() {
   try {
     theGlobal = window;
   } catch (error) {
-    theGlobal = global;
+    /* On node, just get what's injected */
+    theGlobal = esquire('$global');
   }
 
   /* ======================================================================== */
