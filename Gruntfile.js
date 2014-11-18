@@ -5,6 +5,7 @@ module.exports = function(grunt) {
   chai.config.includeStack = true;
   global.expect = chai.expect;
 
+  /* Grunt initialization */
   grunt.initConfig({
 
     /* Unit testing */

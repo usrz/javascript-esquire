@@ -11,10 +11,8 @@ if (_haswindow) {
 
 function EsquireAdapter(p) {
   if (this instanceof EsquireAdapter) {
-    console.log("INSTANCE");
     global.Esquire.apply(this, arguments);
   } else {
-    console.log("CALL");
     return global.esquire.apply(this, arguments);
   }
 };
