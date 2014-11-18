@@ -1,4 +1,10 @@
 module.exports = function(grunt) {
+
+  /* Chai for simple mocha */
+  var chai = require('chai');
+  chai.config.includeStack = true;
+  global.expect = chai.expect;
+
   grunt.initConfig({
 
     /* Unit testing */
@@ -22,9 +28,7 @@ module.exports = function(grunt) {
     /* Simple mocha */
     simplemocha: {
       'default': {
-        src: [ 'node-adapter.js',
-               'chai-adapter.js',
-               'src/esquire-inject.js',
+        src: [ 'index.js',
                'test/esquire-inject.test.js',
                'test/modules/*.js' ]
       }
