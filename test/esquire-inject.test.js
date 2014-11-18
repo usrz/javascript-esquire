@@ -1,5 +1,12 @@
 describe("Esquire inject", function() {
 
+  /* Tests under node */
+  try {
+    window;
+  } catch (error) {
+    global.window = global;
+  }
+
   /* ======================================================================== */
 
   describe("basics", function() {
@@ -9,7 +16,6 @@ describe("Esquire inject", function() {
     });
 
     it('should have static members', function() {
-      expect(Esquire.load).to.be.a('function');
       expect(Esquire.define).to.be.a('function');
       expect(Esquire.modules).to.exist;
     });

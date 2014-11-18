@@ -7,6 +7,10 @@ describe('Esquire loader', function() {
     return '/base/test/load/' + name + "?" + Math.floor(Math.random() * 1000000000000);
   }
 
+  it('should have static members', function() {
+    expect(Esquire.load).to.be.a('function');
+  });
+
   it('should resolve with no scripts', function(done) {
 
     Esquire.load()

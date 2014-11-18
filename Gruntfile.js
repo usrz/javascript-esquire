@@ -19,6 +19,17 @@ module.exports = function(grunt) {
       },
     },
 
+    /* Simple mocha */
+    simplemocha: {
+      'default': {
+        src: [ 'node-adapter.js',
+               'chai-adapter.js',
+               'src/esquire-inject.js',
+               'test/esquire-inject.test.js',
+               'test/modules/*.js' ]
+      }
+    },
+
     /* Uglify task */
     'uglify': {
       'load': {
@@ -67,12 +78,13 @@ module.exports = function(grunt) {
 
   /* Load our plugins */
   grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-simple-mocha');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-jsdoc-ng');
   grunt.loadNpmTasks('grunt-gh-pages');
 
   /* Default task: requirejs then uglify */
-  grunt.registerTask('default', ['karma', 'uglify'  ]);
+  grunt.registerTask('default', ['karma', 'simplemocha', 'uglify']);
   grunt.registerTask('docs',    ['jsdoc-ng', 'gh-pages']);
 
 };
