@@ -1,10 +1,11 @@
 describe("Esquire inject", function() {
 
   /* Tests under node */
+  var theGlobal;
   try {
-    window;
+    theGlobal = window;
   } catch (error) {
-    global.window = global;
+    theGlobal = global;
   }
 
   /* ======================================================================== */
@@ -167,10 +168,10 @@ describe("Esquire inject", function() {
 
     });
 
-    it('should expose a $window module', function() {
+    it('should expose a $global module', function() {
 
-      var w = new Esquire().require("$window");
-      expect(w).to.be.equal(window);
+      var w = new Esquire().require("$global");
+      expect(w).to.be.equal(theGlobal);
 
     });
 
@@ -222,12 +223,12 @@ describe("Esquire inject", function() {
 
     });
 
-    it('should share the same $window instance', function() {
+    it('should share the same $global instance', function() {
 
-      var w1 = new Esquire().require("$window");
-      var w2 = new Esquire().require("$window");
-      expect(w1).to.be.equal(window);
-      expect(w2).to.be.equal(window);
+      var w1 = new Esquire().require("$global");
+      var w2 = new Esquire().require("$global");
+      expect(w1).to.be.equal(theGlobal);
+      expect(w2).to.be.equal(theGlobal);
       expect(w1 === w2).to.be.true;
 
     });

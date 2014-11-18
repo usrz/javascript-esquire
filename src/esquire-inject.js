@@ -1,6 +1,6 @@
 'use strict';
 
-(function EsquireScript(window) {
+(function EsquireScript(global) {
 
   /* Flatten an array, or array of array, for aguments */
   function flatten(iterable) {
@@ -147,8 +147,8 @@
 
   /* Static list of known modules */
   var modules = {
-    "$window": new Module("$window", [], function() {
-      throw new EsquireError("The constructor for '$window' should not be called'")
+    "$global": new Module("$global", [], function() {
+      throw new EsquireError("The constructor for '$global' should not be called'")
      }),
     "$esquire": new Module("$esquire", [], function() {
       throw new EsquireError("The constructor for '$esquire' should not be called'")
@@ -327,7 +327,7 @@
     if (!(this instanceof Esquire)) return new Deferred();
 
     /* Our and cache */
-    var cache = { "$window": window, "$esquire": this };
+    var cache = { "$global": global, "$esquire": this };
 
     /* Create a new instance from a defined module */
     function create(module, dependencyStack) {
@@ -524,18 +524,18 @@
   });
 
   /* If something was loaded before, just copy over */
-  if (window.Esquire) {
-    for (var member in window.Esquire) {
+  if (global.Esquire) {
+    for (var member in global.Esquire) {
       Object.defineProperty(Esquire, member, {
         enumerable: true,
         configurable: false,
-        value: window.Esquire[member]
+        value: global.Esquire[member]
       });
     }
   }
 
   /* Set our Esquire function globally */
-  window.Esquire = Esquire;
+  global.Esquire = Esquire;
 
   /* ======================================================================== */
   /* Esquire static injection                                                 */
@@ -572,7 +572,7 @@
    *                           instance) as in {@link Esquire#require} if this
    *                           method was called wihtout any `callback` function.
    */
-  window.esquire = function() {
+  global.esquire = function() {
     /* No arguments? Ignore */
     if (arguments.length == 0) {
       throw new EsquireError("No dependencies/callback specified");
