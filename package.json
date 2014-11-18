@@ -2,7 +2,7 @@
   "name": "esquire",
   "version": "0.0.0",
   "main": "node-adapter.js",
-  "description": "USRZ Script loader and dependency injector",
+  "description": "USRZ Esquire API",
   "repository": {
     "type": "git",
     "url": "git://github.com/usrz/javascript-esquire.git"
