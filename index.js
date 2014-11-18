@@ -1,3 +1,5 @@
+'use strict';
+
 /* Just load if we never were initialized */
 if (!('Esquire' in global)) {
 
