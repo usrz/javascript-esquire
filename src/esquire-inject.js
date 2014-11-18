@@ -584,6 +584,8 @@
     /* Inject or require? */
     if (args.function) {
       return staticEsquire.inject(args.arguments, args.function);
+    } else if ((arguments.length == 1) && (typeof(arguments[0]) === 'string')) {
+      return staticEsquire.require(arguments[0]);
     } else {
       return staticEsquire.require(args.arguments);
     }
