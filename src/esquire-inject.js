@@ -105,32 +105,38 @@
    * @classdesc The definition of an {@link Esquire} module
    */
   function Module(name, dependencies, constructor) {
+
+    /* Normalize names to "$global/..." */
+    name = globalName(name);
+    for (var i in dependencies) {
+      dependencies[i]=  globalName(dependencies[i]);
+    }
+
     /**
      * The name of this {@link Module}
-     * @member {string} name
-     * @memberof Module
+     * @member {string} Module#name
      * @readonly
      */
     Object.defineProperty(this, 'name', { enumerable: true, configurable: false, value: name });
 
     /**
      * The name of all dependencies required by this {@link Module} (in order).
-     * @member {string[]} dependencies
-     * @memberof Module
+     * @member {string[]} Module#dependencies
      * @readonly
      */
     Object.defineProperty(this, 'dependencies', { enumerable: true, configurable: false, value: dependencies });
 
     /**
      * The constructor function creating instances of this {@link Module}.
-     * @member {function} constructor
-     * @memberof Module
+     * @member {function} Module#constructor
      * @readonly
      */
     Object.defineProperty(this, 'constructor', { enumerable: true, configurable: false, value: constructor });
 
-    /* Hidden $$script for injection */
-    Object.defineProperty(this, '$$script', { enumerable: false, configurable: false, get: function() {
+    /* Hidden $$script for injection and $$dynamic flag */
+    var dynamic = this.$$dynamic ? this.$$dynamic : false;
+    Object.defineProperty(this, "$$dynamic", { enumerable: false, configurable: false, value: dynamic });
+    Object.defineProperty(this, '$$script',  { enumerable: false, configurable: false, get: function() {
       return 'Esquire.define(' + JSON.stringify(this.name)
                          + ',' + JSON.stringify(this.dependencies)
                          + ',' + constructor.toString() + ');'
@@ -143,6 +149,20 @@
 
   /* ======================================================================== */
 
+  /* A regular expression to validate "$global." or "$global/" dynamic names */
+  function isGlobal(name) {
+    return /^\$global[\/\.].+/.test(name);
+  }
+
+  function globalName(name) {
+    if (isGlobal(name)) {
+      return "$global/" + name.substring(8)
+    } else {
+      return name;
+    }
+  }
+
+  /* A $global dynamic module */
   function GlobalModule(name) {
     this.$$dynamic = true;
     Module.call(this, name, ['$global'], function($global) {
@@ -225,14 +245,14 @@
 
     /* Our variables */
     var name;
-    var dependencies;
+    var dependencies = [];
     var constructor;
 
     /* Name and dependencies */
     if (!args.arguments.length) {
       throw new EsquireError("No module name specified");
     } else {
-      name = args.arguments.splice(0, 1)[0];
+      name = globalName(args.arguments.splice(0, 1)[0]);
       dependencies = args.arguments;
     }
 
@@ -307,7 +327,7 @@
             moduleDependencies.push(dependencies[name]);
           }
         }
-      } else if (dependencyName.indexOf('$global/') == 0) {
+      } else if (isGlobal(dependencyName)) {
 
         /* Global "any" dependency not in modules */
         moduleDependencies.push(new GlobalModule(dependencyName));
@@ -544,8 +564,9 @@
      * @returns {Module} The {@link Module} or `null`
      */
     "module": { enumerable: true, configurable: false, value: function(name) {
+      name = globalName(name);
       if (name in modules) return modules[name];
-      if (name.indexOf('$global/') == 0) return new GlobalModule(name);
+      if (isGlobal(name)) return new GlobalModule(name);
       return null;
     }}
   });
