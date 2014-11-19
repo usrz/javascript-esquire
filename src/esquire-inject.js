@@ -77,8 +77,12 @@
     if (dependencies) message += " resolving" + dependencies;
 
     Error.call(this, message);
-    this.name = "EsquireError";
     this.message = message;
+    if (this.stack) {
+      var stack = this.stack;
+      stack = stack.replace(new RegExp("^" + this.name + "\n"), "");
+      this.stack = this.name + ": " + this.message + "\n" + stack;
+    }
   }
 
   function NoModuleError(name, dependencyStack) {
@@ -89,11 +93,11 @@
     EsquireError.call(this, "Module '" + name + "' has circular dependencies", dependencyStack);
   };
 
-  EsquireError.prototype = new Error;
+  EsquireError.prototype = new Error();
   EsquireError.prototype.name = 'EsquireError';
-  NoModuleError.prototype = new EsquireError;
+  NoModuleError.prototype = new Error();
   NoModuleError.prototype.name = 'NoModuleError';
-  CircularDependencyError.prototype = new EsquireError;
+  CircularDependencyError.prototype = new Error();
   CircularDependencyError.prototype.name = 'CircularDependencyError';
 
   /* ======================================================================== */
