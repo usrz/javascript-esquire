@@ -142,6 +142,24 @@
   }
 
   /* ======================================================================== */
+
+  function GlobalModule(name) {
+    this.$$dynamic = true;
+    Module.call(this, name, ['$global'], function($global) {
+      function find(definition, scope) {
+        if (! scope) return undefined;
+        if (! definition) return undefined;
+        switch (definition.length) {
+          case 0:  return undefined;
+          case 1:  return scope[definition[0]];
+          default: return find(definition.slice(1), scope[definition[0]]);
+        }
+      }
+      return find(this.name.substring(8).split('.'), $global);
+    });
+  }
+
+  /* ======================================================================== */
   /* Stuff exposed statically on the Exquire class                            */
   /* ======================================================================== */
 
@@ -218,16 +236,16 @@
       dependencies = args.arguments;
     }
 
+    /* Watch out for double definitions */
+    if (modules[name]) {
+      throw new EsquireError("Module '" + name + "' already defined");
+    }
+
     /* Constructor function */
     if (!args.function) {
       throw new EsquireError("No constructor function specified for module '" + name + "'");
     } else {
       constructor = args.function;
-    }
-
-    /* Watch out for double definitions */
-    if (modules[name]) {
-      throw new EsquireError("Module '" + name + "' already defined");
     }
 
     /* Remember and return a new module */
@@ -289,6 +307,11 @@
             moduleDependencies.push(dependencies[name]);
           }
         }
+      } else if (dependencyName.indexOf('$global/') == 0) {
+
+        /* Global "any" dependency not in modules */
+        moduleDependencies.push(new GlobalModule(dependencyName));
+
       } else {
 
         /* Dependency not found */
@@ -356,8 +379,10 @@
       }
 
       /* Invoke the constructor */
-      var instance = module.constructor.apply(null, parameters);
-      if (module.name) cache[module.name] = instance;
+      var instance = module.constructor.apply(module, parameters);
+      if (module.name && (! module.$$dynamic)) {
+        cache[module.name] = instance;
+      }
       return instance;
 
     }
@@ -519,7 +544,9 @@
      * @returns {Module} The {@link Module} or `null`
      */
     "module": { enumerable: true, configurable: false, value: function(name) {
-      return modules[name] || null;
+      if (name in modules) return modules[name];
+      if (name.indexOf('$global/') == 0) return new GlobalModule(name);
+      return null;
     }}
   });
 

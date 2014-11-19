@@ -15,6 +15,7 @@ module.exports = function(config) {
       'src/esquire-inject.js',
       'src/esquire-load.js',
       'test/esquire-inject.test.js',
+      'test/esquire-global.test.js',
       'test/modules/*.js',
     ],
 
