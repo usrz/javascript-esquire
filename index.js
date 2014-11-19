@@ -9,7 +9,10 @@ if (!('Esquire' in global)) {
 
   /* Create a fake window object for initialization */
   global.window = {
+    'Buffer':        global['Buffer'],
     'console':       global['console'],
+    'require':       global['require'],
+    'process':       global['process'],
     'setTimeout':    global['setTimeout'],
     'setInterval':   global['setInterval'],
     'clearTimeout':  global['clearTimeout'],
