@@ -30,6 +30,7 @@ module.exports = function(grunt) {
     simplemocha: {
       'default': {
         src: [ 'index.js',
+               'test/esquire-global.test.js',
                'test/esquire-inject.test.js',
                'test/modules/*.js' ]
       }
@@ -88,7 +89,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-gh-pages');
 
   /* Default task: requirejs then uglify */
-  grunt.registerTask('default', ['karma', 'simplemocha', 'uglify']);
+  grunt.registerTask('default', ['test', 'uglify']);
+  grunt.registerTask('test',    ['karma', 'simplemocha', 'uglify']);
   grunt.registerTask('docs',    ['jsdoc-ng', 'gh-pages']);
 
 };

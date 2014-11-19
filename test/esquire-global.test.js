@@ -35,6 +35,32 @@ describe("Esquire global dynamic sub-modules", function() {
     });
   }
 
+  it('should correctly resolve prefixed names', function() {
+
+    // This is some of the stuff we found..
+    // - window.WebKitBlobBuilder
+    // - window.webkitURL
+    // - window.msCrypto.subtle
+    // - window.crypto.webkitSubtle
+
+    var e = new Esquire();
+    var $global = e.require('$global');
+    $global.test = {
+      WebKitBlobBuilder: "WebKitBlobBuilder",
+      webkitURL: "webkitURL",
+      msCrypto1: { subtle: "msCrypto.subtle" },
+      crypto2: { webkitSubtle: "crypto.webkitSubtle" }
+    };
+
+    expect(e.require("$global.test.BlobBuilder")).to.equal("WebKitBlobBuilder");
+    expect(e.require("$global.test.URL")).to.equal("webkitURL");
+    expect(e.require("$global.test.crypto1.subtle")).to.equal("msCrypto.subtle");
+    expect(e.require("$global.test.crypto2.subtle")).to.equal("crypto.webkitSubtle");
+
+    delete $global.test;
+
+  });
+
   it('should correctly normalize dependency names', function() {
 
     Esquire.define("$global.forDependency1", ["$global.foo"], function() {});

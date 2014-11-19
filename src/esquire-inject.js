@@ -1,4 +1,4 @@
-'use strict';
+ 'use strict';
 
 (function EsquireScript(global) {
 
@@ -166,15 +166,39 @@
   function GlobalModule(name) {
     this.$$dynamic = true;
     Module.call(this, name, ['$global'], function($global) {
+
+      /* Find a property with a prefix */
+      function prefix(property, scope, onlyPrefixed) {
+
+        /* Check non prefixes property if we have to */
+        if ((! onlyPrefixed) && (property in scope)) return scope[property];
+
+        /* Check the various prefixed properties, if we have one */
+        var prefixes = ["Ms", "ms", "Moz", "moz", "WebKit", "webkit"];
+        for (var i in prefixes) {
+          var prefixed = prefixes[i] + property;
+          if (prefixed in scope) return scope[prefixed];
+        }
+
+        /* Things like "window.crypto" become "window.webkitCrypto" */
+        if (property[0] !== property[0].toUpperCase()) {
+          return prefix(property[0].toUpperCase() + property.substring(1), scope, true);
+        } else {
+          return undefined;
+        }
+      }
+
+      /* Find a property recursively */
       function find(definition, scope) {
         if (! scope) return undefined;
         if (! definition) return undefined;
         switch (definition.length) {
           case 0:  return undefined;
-          case 1:  return scope[definition[0]];
-          default: return find(definition.slice(1), scope[definition[0]]);
+          case 1:  return prefix(definition[0], scope);
+          default: return find(definition.slice(1), prefix(definition[0], scope));
         }
       }
+
       return find(this.name.substring(8).split('.'), $global);
     });
   }
