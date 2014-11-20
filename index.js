@@ -2,47 +2,26 @@
 
 /* Just load if we never were initialized */
 if (!('Esquire' in global)) {
-
-  /* Preserve the old window, if any */
-  var _oldwindow = global.window;
-  var _haswindow = 'window' in global;
-
-  /* Create a fake window object for initialization */
-  global.window = {
-    'Buffer':        global['Buffer'],
-    'console':       global['console'],
-    'require':       global['require'],
-    'process':       global['process'],
-    'setTimeout':    global['setTimeout'],
-    'setInterval':   global['setInterval'],
-    'clearTimeout':  global['clearTimeout'],
-    'clearInterval': global['clearInterval']
-  };
-
-  /* Load the esquire library */
   require("./src/esquire-inject.js");
-
-  /* Remember our function and class */
-  global.Esquire = global.window.Esquire;
-  global.esquire = global.window.esquire;
-
-  /* Restore the old window */
-  if (_haswindow) {
-    global.window = _oldwindow;
-  } else {
-    delete global.window;
-  }
 }
 
 /* We are sure we have Esquire in globals */
-function EsquireAdapter(p) {
+function EsquireAdapter() {
   if (this instanceof EsquireAdapter) {
     global.Esquire.apply(this, arguments);
   } else {
     return global.esquire.apply(this, arguments);
   }
 };
-EsquireAdapter.prototype = global.Esquire.prototype;
+
+/* Prototype and static members */
+EsquireAdapter.prototype = Esquire.prototype;
+EsquireAdapter.define  = function() { return global.Esquire.define .call(global.Esquire, arguments) };
+EsquireAdapter.resolve = function() { return global.Esquire.resolve.call(global.Esquire, arguments) };
+EsquireAdapter.module  = function() { return global.Esquire.module .call(global.Esquire, arguments) };
+Object.defineProperty(EsquireAdapter, 'modules', {
+  enumerable: true, configurable: false, get: function() { return global.Esquire.modules }
+});
 
 /* Export our adapter */
 module.exports = EsquireAdapter;

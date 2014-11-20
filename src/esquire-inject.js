@@ -668,4 +668,10 @@
 
   };
 
-})(window);
+})((function() {
+  try {
+    return window;
+  } catch (e) {
+    return global;
+  }
+})());
