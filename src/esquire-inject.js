@@ -93,11 +93,16 @@
     EsquireError.call(this, "Module '" + name + "' has circular dependencies", dependencyStack);
   };
 
-  EsquireError.prototype = new Error();
+  EsquireError.prototype = Object.create(Error.prototype);
+  EsquireError.prototype.constructor = EsquireError;
   EsquireError.prototype.name = 'EsquireError';
-  NoModuleError.prototype = new Error();
+
+  NoModuleError.prototype = Object.create(EsquireError.prototype);
+  NoModuleError.prototype.constructor = NoModuleError;
   NoModuleError.prototype.name = 'NoModuleError';
-  CircularDependencyError.prototype = new Error();
+
+  CircularDependencyError.prototype = Object.create(EsquireError.prototype);
+  CircularDependencyError.prototype.constructor = CircularDependencyError;
   CircularDependencyError.prototype.name = 'CircularDependencyError';
 
   /* ======================================================================== */
