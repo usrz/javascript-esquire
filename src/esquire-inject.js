@@ -223,10 +223,10 @@
   var modules = {
     "$global": new Module("$global", [], function() {
       throw new EsquireError("The constructor for '$global' should not be called'")
-     }),
+     }, true),
     "$esquire": new Module("$esquire", [], function() {
       throw new EsquireError("The constructor for '$esquire' should not be called'")
-     })
+     }, true)
   };
 
   /**
