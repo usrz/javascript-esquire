@@ -113,7 +113,7 @@
    * @class Module
    * @classdesc The definition of an {@link Esquire} module
    */
-  function Module(name, dependencies, constructor) {
+  function Module(name, dependencies, constructor, dynamic) {
 
     /* Normalize names to "$global/..." */
     name = globalName(name);
@@ -143,8 +143,7 @@
     Object.defineProperty(this, 'constructor', { enumerable: true, configurable: false, value: constructor });
 
     /* Hidden $$script for injection and $$dynamic flag */
-    var dynamic = this.$$dynamic ? this.$$dynamic : false;
-    Object.defineProperty(this, "$$dynamic", { enumerable: false, configurable: false, value: dynamic });
+    Object.defineProperty(this, "$$dynamic", { enumerable: false, configurable: false, value: dynamic || false });
     Object.defineProperty(this, '$$script',  { enumerable: false, configurable: false, get: function() {
       return 'Esquire.define(' + JSON.stringify(this.name)
                          + ',' + JSON.stringify(this.dependencies)
@@ -173,7 +172,6 @@
 
   /* A $global dynamic module */
   function GlobalModule(name) {
-    this.$$dynamic = true;
     Module.call(this, name, ['$global'], function($global) {
 
       /* Find a property with a prefix */
@@ -209,8 +207,13 @@
       }
 
       return find(this.name.substring(8).split('.'), $global);
-    });
+    }, true);
   }
+
+  GlobalModule.prototype = Object.create(Module.prototype);
+  GlobalModule.prototype.constructor = GlobalModule;
+  GlobalModule.prototype.name = "GlobalModule";
+
 
   /* ======================================================================== */
   /* Stuff exposed statically on the Exquire class                            */
