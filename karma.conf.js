@@ -12,7 +12,7 @@ module.exports = function(config) {
 
     /* These need to be in order */
     files: [
-      'lib/promises.test.js',
+      'src/mocha.js',
 
       /* Order here is important */
       'src/esquire.js',

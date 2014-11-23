@@ -23,7 +23,7 @@ module.exports = function(grunt) {
     simplemocha: {
       'default': {
         src: [ 'index.js',
-               'lib/promises.test.js',
+               'src/mocha.js',
                'test/deferred.test.js',
                'test/promise.test.js',
                'test/esquire.test.js',
