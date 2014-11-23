@@ -2,6 +2,12 @@
 
 module.exports = function(config) {
 
+  console.log("* ================================================= *");
+  console.log("* Esquire loader tests also available at:           *");
+  console.log("* http://127.0.0.1:9876/base/test/browser/test.html *");
+  console.log("* ================================================= *");
+  console.log("");
+
   config.set({
     /* Base tests definition */
     basePath: '.',
