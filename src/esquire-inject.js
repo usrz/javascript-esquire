@@ -1,5 +1,8 @@
  'use strict';
 
+/** @typedef {module:$deferred.Deferred} Deferred */
+/** @typedef {module:$promise.Promise} Promise */
+
 (function EsquireScript(global) {
 
   /*==========================================================================*
@@ -11,14 +14,13 @@
   /**
    * Create a new {@link Deferred} instance.
    *
-   * @classdesc
-   * The {@link Deferred} class behaves much like _AngularJS_'s own
-   * [`$q.defer()`](https://docs.angularjs.org/api/ng/service/$q#defer)
-   * method. For more information, look up the
-   * [Deferred API](https://docs.angularjs.org/api/ng/service/$q#the-deferred-api).
-   *
-   * @class Deferred
-   * @memberof module:defers
+   * @class module:$deferred.Deferred
+   * @example -
+   * Esquire.define("myModule", ['$deferred'], function(Deferred) {
+   *   var deferred = new Deferred();
+   *   // ....
+   *   return deferred.promise;
+   * });
    */
   function Deferred(onSuccess, onFailure) {
 
@@ -52,9 +54,7 @@
        *                                derived {@link Deferred#promise promise}
        *                                will **follow** that _then-able_, adopting
        *                                its eventual state.
-       * @memberof module:defers.Deferred
-       * @function resolve
-       * @instance
+       * @function module:$deferred.Deferred#resolve
        */
       "resolve": { enumerable: true, configurable: false, value: function(success) {
         if (success && (typeof(success.then) === 'function')) {
@@ -86,9 +86,7 @@
        * the specified _failure_ reason.
        *
        * @param {*} failure - The reason for rejection.
-       * @memberof module:defers.Deferred
-       * @function reject
-       * @instance
+       * @function module:$deferred.Deferred#reject
        */
       "reject": { enumerable: true, configurable: false, value: function(failure) {
         if (status == 0) {
@@ -107,9 +105,7 @@
       /**
        * The derived {@link Promise} associated with this {@link Deferred} instance.
        *
-       * @memberof module:defers.Deferred
-       * @member {Promise} promise
-       * @instance
+       * @member {Promise} module:$deferred.Deferred#promise
        */
       "promise": { enumerable: true, configurable: false, value:
         Object.defineProperties(new Object(), {
@@ -147,8 +143,7 @@
   /**
    * Create a new {@link Promise} instance.
    *
-   * @class Promise
-   * @memberof module:defers
+   * @class module:$promise.Promise
    * @classdesc The {@link Promise} class provides a minimal implementation of JavaScript
    *            [Promise](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)s
    * @param {function} executor - A function object with two arguments
@@ -156,6 +151,12 @@
    *        the second argument rejects it. We can call these functions, once
    *        our operation is completed, with the appropriate values for
    *        _fulfillment_ or _rejection_.
+   * @example -
+   * Esquire.define("myModule", ['$promise'], function(Promise) {
+   *   return new Promise(function(resolve, reject) {
+   *     // ... resolve or reject this promise...
+   *    });
+   * });
    */
   function PromiseImpl(executor) {
 
@@ -181,9 +182,7 @@
      *        {@link Promise} has been rejected.
      * @returns {Promise} A new {@link Promise} resolving to the return value
      *          of the called handler
-     * @instance
-     * @function then
-     * @memberof module:defers.Promise
+     * @function module:$promise.Promise#then
      */
     Object.defineProperty(this, 'then', {
       enumerable: true,
@@ -201,9 +200,7 @@
      *        {@link Promise} has been rejected.
      * @returns {Promise} A new {@link Promise} resolving to the return value
      *          of the called handler
-     * @instance
-     * @function catch
-     * @memberof module:defers.Promise
+     * @function module:$promise.Promise#catch
      */
     Object.defineProperty(this, 'catch', {
       enumerable: true,
@@ -238,9 +235,7 @@
    *
    * @param {iterable} iterable - A collection of values or _then-able_s.
    * @returns {Promise} A {@link Promise}.
-   * @static
-   * @function all
-   * @memberof module:defers.Promise
+   * @function module:$promise.Promise.all
    */
   Object.defineProperty(PromiseImpl, "all", {
     enumerable: true,
@@ -295,9 +290,7 @@
    *
    * @param {iterable} iterable - Foo.
    * @returns {Promise} A {@link Promise}.
-   * @static
-   * @function race
-   * @memberof module:defers.Promise
+   * @function module:$promise.Promise.race
    */
   Object.defineProperty(PromiseImpl, "race", {
     enumerable: true,
@@ -334,9 +327,7 @@
    *
    * @param {(*|Promise)} success - The resolution result or _then-able_ to follow.
    * @returns {Promise} A resolved {@link Promise}.
-   * @static
-   * @function resolve
-   * @memberof module:defers.Promise
+   * @function module:$promise.Promise.resolve
    */
   Object.defineProperty(PromiseImpl, "resolve", {
     enumerable: true,
@@ -357,9 +348,7 @@
    *
    * @param {*} failure - The rejection reason.
    * @returns {Promise} A rejected {@link Promise}.
-   * @static
-   * @function reject
-   * @memberof module:defers.Promise
+   * @function module:$promise.Promise.reject
    */
   Object.defineProperty(PromiseImpl, "reject", {
     enumerable: true,
@@ -384,8 +373,8 @@
   function EsquireError(message, dependencyStack) {
     message = "Esquire: " + (message || "Unknown error");
     var dependencies = "";
-    if (dependencyStack && (dependencyStack.length)) { // 0 is always null
-      for (var i = 1; i < dependencyStack.length; i ++) {
+    if (dependencyStack && (dependencyStack.length)) {
+      for (var i = 0; i < dependencyStack.length; i ++) {
         if (dependencyStack[i]) {
           dependencies += " -> " + dependencyStack[i];
         }
@@ -449,6 +438,7 @@
   /**
    * @class Module
    * @classdesc The definition of an {@link Esquire} module
+   * @protected
    */
   function Module(name, dependencies, constructor, dynamic) {
 
@@ -653,9 +643,7 @@
   /**
    * Define a {@link Module} as available to Esquire
    *
-   * @static
-   * @function define
-   * @memberof Esquire
+   * @function Esquire.define
    * @example -
    * Esquire.define('foo', ['modA', 'depB'], function(a, b) {
    *   // 'a' will be an instance of 'modA'
@@ -733,9 +721,7 @@
   /**
    * Return an array of {@link Module} dependencies for a {@link Module}.
    *
-   * @static
-   * @function resolve
-   * @memberof Esquire
+   * @function Esquire.resolve
    * @param {string|Module} module - The {@link Module} (or its name) for which
    *                                 dependendencies should be resolved.
    * @param {boolean} [transitive] - If `true` all direct and indirect
@@ -814,7 +800,8 @@
    *==========================================================================*/
 
   /**
-   * Create a new {@link Esquire} injector instance.
+   * Create a new {@link Esquire} injector instance, optionally specifying
+   * a timeout (in milliseconds) after which module resolution fails.
    *
    * @class Esquire
    * @classdesc
@@ -825,14 +812,30 @@
    *
    * A _globally shared_ {@link Esquire} instance can be used by invoking the
    * [esquire(...)]{@link esquire} method, rather than creating a new instance
-   * and using the [require(...)]{@link Esquire#require} call.
+   * and using the [require(...)]{@link Esquire#require} or
+   * [inject(...)]{@link Esquire#inject} calls.
+   *
+   * @param {number} [timeout] The amount of millisecods to wait for injection,
+   *                           minimum 100 ms, defaults to 2000 ms.
    */
-  function Esquire() {
+  function Esquire(timeout) {
     /* Proper construction */
     if (!(this instanceof Esquire)) return new Esquire(Promise);
 
     /* Promise implementation */
     var Promise = global.Promise || PromiseImpl;
+
+    /* Timeout */
+    if (timeout === undefined) {
+      timeout = 2000;
+    } else {
+      timeout = Number(timeout);
+      if (timeout === NaN) {
+        throw new EsquireError("Timeout is not a number");
+      } else if (timeout < 100) {
+        throw new EsquireError("Timeout must be greater or equal than 100ms");
+      }
+    }
 
     /* Our cache */
     var cache = {
@@ -872,7 +875,18 @@
       var cloneStack = dependencyStack.slice(0);
 
       /* Return a promise */
-      var promise = new Promise(function(resolve, reject) {
+      var promise = new Promise(function(resolveCallback, rejectCallback) {
+
+        /* Set a timeout */
+        var timeoutMillis = timeout - (dependencyStack.length * 10);
+        var timeoutId = global.setTimeout(function() {
+          rejectCallback(new EsquireError("Timeout reached waiting for module '" + module.name + "'", cloneStack));
+        }, timeoutMillis < 50 ? 50 : timeoutMillis);
+
+        /* Clear timeouts and resolve/reject */
+        var resolve = function(success) { global.clearTimeout(timeoutId); resolveCallback(success) };
+        var reject  = function(failure) { global.clearTimeout(timeoutId); rejectCallback (failure) };
+
         /* When all parameters have been resolved... */
         Promise.all(parameters).then(
           function(success) {
@@ -899,12 +913,11 @@
         );
 
       });
-      // var instance = module.constructor.apply(module, parameters);
+
       if (module.name && (! module.$$dynamic)) {
         cache[module.name] = promise;
       }
       return promise;
-      // return instance;
 
     }
 
@@ -917,25 +930,32 @@
      * @example -
      * var esq = new Esquire();
      *
-     * var fromArray = esq.require(['fooModule', 'barModule']);
-     * // fromArray[0] will be an instance of 'fooModule'
-     * // fromArray[1] will be an instance of 'barModule'
+     * esq.require(['fooModule', 'barModule'])
+     *   .then(function(fromArray) {
+     *     // fromArray[0] will be an instance of 'fooModule'
+     *     // fromArray[1] will be an instance of 'barModule'
+     *   });
      *
      * @example Injection with a single `string` argument
-     * var fromString = esq.require('bazModule');
-     * // 'fromString' will be an instance of 'bazModule'
+     * esq.require('bazModule')
+     *   .then(function(fromString) {
+     *     // 'fromString' will be an instance of 'bazModule'
+     *   });
      *
      * @example Injection with a number of different arguments
-     * var fromArgs = esq.require('abcModule', 'xyzModule');
-     * // fromArgs[0] will be an instance of 'abcModule'
-     * // fromArgs[1] will be an instance of 'xyzModule'
+     * esq.require('abcModule', 'xyzModule')
+     *   .then(function(fromArgs) {
+     *     // fromArgs[0] will be an instance of 'abcModule'
+     *     // fromArgs[1] will be an instance of 'xyzModule'
+     *   });
      *
      * @param {string[]|string} dependencies - An array of required module names
      *                                         (or a single module name) whose
      *                                         instance are to be returned.
-     * @return {object[]|object} An array of module instances, or a single
-     *                           module instance, if this method was called
-     *                           with a single `string` parameter.
+     * @return {Promise[]|Promise} An array of {@link Promise}s eventually
+     *                             resolving to the required module instances,
+     *                             or a single {@link Promise} (if this method
+     *                             was called with a single `string` parameter).
      */
     function require() {
 
@@ -969,6 +989,12 @@
      * esq.inject(['modA', 'depB'], function(a, b) {
      *   // 'a' will be an instance of 'modA'
      *   // 'b' will be an instance of 'depB'
+     *   return "something";
+     *
+     * }).then(function(result) {
+     *   // The function will be (eventually) injected with its required
+     *   // modules, and its return value will resolve the promis returned
+     *   // by the "inject(...) method!
      * });
      *
      * @example Injection also works without arrays (only arguments)
@@ -990,7 +1016,7 @@
      * @param {function} callback - A function that will be called once all
      *                              module dependencies have been instantiated,
      *                              with each instance as a parameter.
-     * @return Whatever value was returned by the `callback` function.
+     * @return {@link Promise} Whatever value was returned by the `callback` function.
      */
     function inject() {
       var args = normalize(arguments);

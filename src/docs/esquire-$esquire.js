@@ -7,12 +7,11 @@
  * @module {Esquire} $esquire
  * @example -
  * Esquire.define("myModule", ['$esquire'], function($esquire) {
- *   var optionalModule;
- *   try {
- *     optionalModule = $esquire.require('optionalModule');
- *   } catch (error) {
- *     console.log("Optional module not available");
- *   }
- *   //...
+ *   $esquire.require('optionalModule')
+ *     .then(function(optional) {
+ *       // ... here is the optional module instance
+ *     }, function(failure) {
+ *       // module not found? troubles creating?
+ *     });
  * });
  */

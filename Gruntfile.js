@@ -10,13 +10,6 @@ module.exports = function(grunt) {
 
     /* Unit testing */
     'karma': {
-      'load': {
-        configFile: 'karma.load.js',
-        runnerPort: 9999,
-        singleRun: true,
-        browsers: ['PhantomJS', 'Chrome', 'Firefox', 'Safari'],
-        logLevel: 'ERROR'
-      },
       'default': {
         configFile: 'karma.conf.js',
         runnerPort: 9999,
@@ -31,7 +24,6 @@ module.exports = function(grunt) {
       'default': {
         src: [ 'index.js',
                'lib/promises.test.js',
-               //'test/esquire-global.test.js',
                'test/deferred.test.js',
                'test/promise.test.js',
                'test/esquire-inject.test.js',
@@ -42,10 +34,6 @@ module.exports = function(grunt) {
 
     /* Uglify task */
     'uglify': {
-      'load': {
-        src: 'src/esquire-load.js',
-        dest: 'esquire-load.min.js'
-      },
       'inject': {
         src: 'src/esquire-inject.js',
         dest: 'esquire-inject.min.js'
@@ -59,7 +47,7 @@ module.exports = function(grunt) {
     /* Documentation task */
     'jsdoc-ng' : {
       'dist' : {
-        src: ['src/*.js', 'README.md' ],
+        src: ['src/**/*.js', 'README.md' ],
         dest: 'docs',
         template : 'jsdoc-ng',
         options: {

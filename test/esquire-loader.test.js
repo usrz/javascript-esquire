@@ -101,55 +101,31 @@ describe('Esquire loader', function() {
       });
   })
 
-  describe('promises', function() {
+  it('should load a module from an external script', function(done) {
 
-    it('should resolve chaining promises', function(done) {
+    Esquire.load(file("module-script.js"))
+      .then(function(success) {
+        expect(success['loaded-module']).to.exist();
+        return new Esquire().require('loaded-module');
+      }, function(failure) {
+        console.warn("Exception loading script 'module-script.js");
+        done(failure);
+      })
 
-      Esquire.load(file("empty-script.js"))
-        .then()
-        .then()
-        .then()
-        .then(function(success) {
-          done();
-        }, function(failure) {
-          done(failure);
-        });
-    });
+      .then(function(module) {
+        expect(module).to.be.equal('This was loaded from an external module');
+        done();
 
-    it('should reject chaining promises', function(done) {
+      }, function(failure) {
+        console.warn("Exception resolving module from 'module-script.js");
+        done(failure);
+      })
 
-      Esquire.load(file("non-existant.js"))
-        .then()
-        .then()
-        .then()
-        .then(function(success) {
-          done(new Error("Should fail"));
-        }, function(failure) {
-          done();
-        });
-    });
+      .then(function(success) {
+        done();
+      }, function(failure) {
+        done(failure);
+      });
+  })
 
-    it('should resolve rescuing promises', function(done) {
-
-      Esquire.load(file("non-existant.js"))
-        .catch(function() { return true })
-        .then(function(success) {
-          done();
-        }, function(failure) {
-          done(failure);
-        });
-    });
-
-    it('should reject invalidating promises', function(done) {
-
-      Esquire.load(file("non-existant.js"))
-        .then(function() { throw new Error("FOO") })
-        .then(function(success) {
-          done(new Error("Should fail"));
-        }, function(failure) {
-          done();
-        });
-    });
-
-  });
 })

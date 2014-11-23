@@ -9,7 +9,7 @@
  * where some (most?) of the `window` objects and methods are exposed through
  * the `self` global reference, or with _Node.JS_ where `global` is used.
  *
- * @module {Window} $global
+ * @module {*} $global
  * @example -
  * Esquire.define("crypto", ['$global'], function($global) {
  *   var subtle = $global.crypto.subtle;

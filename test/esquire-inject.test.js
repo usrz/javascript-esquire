@@ -256,6 +256,18 @@
 
       });
 
+      promises('should time out waiting injection', function() {
+
+        return new Esquire(100).require("module-i")
+        .then(function(success) {
+          throw new Error("Should not succeed");
+        }, function(error) {
+          expect(error).to.be.instanceof(Error);
+          expect(error.message).to.be.equal('Esquire: Timeout reached waiting for module \'module-i\'');
+        })
+
+      });
+
     });
 
     /* ======================================================================== */
