@@ -4,7 +4,7 @@ window.onerror = null;
 describe('Esquire loader', function() {
 
   function file(name) {
-    return '/base/test/load/' + name + "?" + Math.floor(Math.random() * 1000000000000);
+    return '/base/test/loader/' + name + "?" + Math.floor(Math.random() * 1000000000000);
   }
 
   it('should have static members', function() {

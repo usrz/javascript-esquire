@@ -14,7 +14,7 @@ var runtests = (function() {
 
   /* Break browser cache */
   function file(name) {
-    return "../load/" + name + "?" + Math.floor(Math.random() * 100000000);
+    return "../loader/" + name + "?" + Math.floor(Math.random() * 100000000);
   }
 
   /* Create a test definition */

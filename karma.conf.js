@@ -30,7 +30,7 @@ module.exports = function(config) {
 
       /* To be loaded during loader test */
       { pattern: 'test/browser/*', included: false },
-      { pattern: 'test/load/*',    included: false },
+      { pattern: 'test/loader/*',  included: false },
     ],
 
     /* Pretty */
