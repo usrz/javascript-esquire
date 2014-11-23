@@ -18,6 +18,7 @@ module.exports = function(config) {
 
     /* These need to be in order */
     files: [
+      'src/esquire-inject.js',
       'src/esquire-load.js',
       'test/esquire-load.test.js',
 

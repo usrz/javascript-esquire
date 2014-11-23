@@ -2,68 +2,385 @@
 
 (function EsquireScript(global) {
 
-  /* Flatten an array, or array of array, for aguments */
-  function flatten(iterable) {
-    if (! iterable) return [];
+  /*==========================================================================*
+   | *======================================================================* |
+   | | DEFERRED IMPLEMENTATION                                              | |
+   | *======================================================================* |
+   *==========================================================================*/
 
-    var array = [];
-    for (var i = 0; i < iterable.length; i ++) {
-      var current = iterable[i];
-      if (typeof(current) === 'string') {
-        array.push(current);
-      } else if (typeof(current) === 'function') {
-        array.push(current);
-      } else if (Array.isArray(current)) {
-        array = array.concat(flatten(current));
-      } else if ((typeof(current) === 'object')
-              && (typeof(current.length) === 'number')) {
-        // JavaScripts' "arguments" is an object, not an array, and on top of
-        // that PhantomJS' own implementation is not iterable... Workaround!
-        array = array.concat(flatten(current));
-      } else {
-        throw new EsquireError("Invalid dependency: " + JSON.stringify(current));
+  /**
+   * Create a new {@link Deferred} instance.
+   *
+   * @classdesc
+   * The {@link Deferred} class behaves much like _AngularJS_'s own
+   * [`$q.defer()`](https://docs.angularjs.org/api/ng/service/$q#defer)
+   * method. For more information, look up the
+   * [Deferred API](https://docs.angularjs.org/api/ng/service/$q#the-deferred-api).
+   *
+   * @class Deferred
+   * @memberof module:defers
+   */
+  function Deferred(onSuccess, onFailure) {
+
+    /* Proper construction */
+    if (!(this instanceof Deferred)) return new Deferred(onSuccess, onFailure);
+
+    /* Statuses: 0 -> pending, -1 -> rejected, 1 -> resolved */
+    var status = 0;
+    var result = null;
+    var chain = [];
+
+    /* Notification of chained defers */
+    var notify = function(chain) {
+      var method = status > 0 ? "resolve" :
+                   status < 0 ? "reject" :
+                   null;
+      if (method) for (var i in chain) {
+        chain[i][method](result);
       }
     }
-    return array;
+
+    var deferred = this;
+    Object.defineProperties(this, {
+
+      /**
+       * Resolve this instance's derived {@link Deferred#promise promise} with
+       * the specified _success_ value.
+       *
+       * @param {(*|Promise)} success - If the value is a _then-able_ (i.e. has a
+       *                                `then(...)` method) this instance's
+       *                                derived {@link Deferred#promise promise}
+       *                                will **follow** that _then-able_, adopting
+       *                                its eventual state.
+       * @memberof module:defers.Deferred
+       * @function resolve
+       * @instance
+       */
+      "resolve": { enumerable: true, configurable: false, value: function(success) {
+        if (success && (typeof(success.then) === 'function')) {
+          /* If we were given a "then-able" just call ourselves back */
+          success.then(function(success) {
+            deferred.resolve(success);
+          }, function(failure) {
+            deferred.reject(failure);
+          });
+
+        } else {
+          /* We were given a success, resolve immediately */
+          if (status == 0) {
+            result = success;
+            status = 1;
+            if (onSuccess) try {
+              result = onSuccess(result);
+            } catch (error) {
+              result = error;
+              status = -1;
+            }
+            notify(chain);
+          }
+        }
+      }},
+
+      /**
+       * Rejects this instance's derived {@link Deferred#promise promise} with
+       * the specified _failure_ reason.
+       *
+       * @param {*} failure - The reason for rejection.
+       * @memberof module:defers.Deferred
+       * @function reject
+       * @instance
+       */
+      "reject": { enumerable: true, configurable: false, value: function(failure) {
+        if (status == 0) {
+          result = failure;
+          status = -1;
+          if (onFailure) try {
+            result = onFailure(result);
+            status = 1;
+          } catch (error) {
+            result = error;
+          }
+          notify(chain);
+        }
+      }},
+
+      /**
+       * The derived {@link Promise} associated with this {@link Deferred} instance.
+       *
+       * @memberof module:defers.Deferred
+       * @member {Promise} promise
+       * @instance
+       */
+      "promise": { enumerable: true, configurable: false, value:
+        Object.defineProperties(new Object(), {
+          "then":  { enumerable: true, configurable: false, value: function(onSuccess, onFailure) {
+            var chained = new Deferred(onSuccess, onFailure);
+            if (status == 0) {
+              chain.push(chained);
+            } else {
+              notify([chained]);
+            }
+            return chained.promise;
+          }},
+          "catch": { enumerable: true, configurable: false, value: function(onFailure) {
+            return this.then(null, onFailure);
+          }}
+        })
+      }
+    });
   };
 
-  /* Normalize and validate an array into a array/function object */
-  function normalize() {
-    var array = flatten(arguments);
+  /* Prototype, constructor and name */
+  Deferred.prototype = Object.create(Object.prototype);
+  Deferred.prototype.constructor = Deferred;
+  Deferred.prototype.name = 'Deferred';
 
-    /* The normalized structure */
-    var normalized = {
-      arguments: [],
-      function: null
-    };
 
-    /* No elements in the array? Empty */
-    if (! array.length) return normalized;
 
-    /* Set the function only if it's the last element */
-    if (typeof(array[array.length - 1]) === 'function') {
-      normalized.function = array.splice(-1)[0];
+
+  /*==========================================================================*
+   | *======================================================================* |
+   | | PROMISE IMPLEMENTATION                                               | |
+   | *======================================================================* |
+   *==========================================================================*/
+
+  /**
+   * Create a new {@link Promise} instance.
+   *
+   * @class Promise
+   * @memberof module:defers
+   * @classdesc The {@link Promise} class provides a minimal implementation of JavaScript
+   *            [Promise](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)s
+   * @param {function} executor - A function object with two arguments
+   *        (`resolve` and `reject`). The first argument fulfills the promise,
+   *        the second argument rejects it. We can call these functions, once
+   *        our operation is completed, with the appropriate values for
+   *        _fulfillment_ or _rejection_.
+   */
+  function PromiseImpl(executor) {
+
+    /* Proper construction */
+    if (!(this instanceof PromiseImpl)) return new PromiseImpl(executor);
+
+    /* Sanity checks */
+    if (!(typeof(executor) == 'function')) {
+      throw new TypeError("Executor is not a function");
     }
 
-    /* Validate all arguments as strings */
-    for (var i in array) {
-      var argument = array[i];
-      if (typeof(argument) === 'string') {
-        normalized.arguments.push(argument);
-      } else {
-        throw new EsquireError("Found " + typeof(argument) + " but needed string: " + argument);
+    /* Internal deferred */
+    var deferred = new Deferred();
+
+    /**
+     * Appends fulfillment and rejection handlers to this {@link Promise}, and
+     * returns a **new** promise resolving to the return value of the called
+     * handler.
+     *
+     * @param {function} [onSuccess] - The handler to call when this
+     *        {@link Promise} has been successfully resolved.
+     * @param {function} [onFailure] - The handler to call when this
+     *        {@link Promise} has been rejected.
+     * @returns {Promise} A new {@link Promise} resolving to the return value
+     *          of the called handler
+     * @instance
+     * @function then
+     * @memberof module:defers.Promise
+     */
+    Object.defineProperty(this, 'then', {
+      enumerable: true,
+      configurable: false,
+      value: deferred.promise['then']
+    });
+
+    /**
+     * Appends a rejection handler to this {@link Promise}, and returns a
+     * **new** promise resolving to the return value of the called handler.
+     *
+     * This is equivalent to calling `then(null, onFailure)`.
+     *
+     * @param {function} [onFailure] - The handler to call when this
+     *        {@link Promise} has been rejected.
+     * @returns {Promise} A new {@link Promise} resolving to the return value
+     *          of the called handler
+     * @instance
+     * @function catch
+     * @memberof module:defers.Promise
+     */
+    Object.defineProperty(this, 'catch', {
+      enumerable: true,
+      configurable: false,
+      value: deferred.promise['catch']
+    });
+
+    /* Execute our promise */
+    try {
+      executor(deferred.resolve, deferred.reject);
+    } catch (error) {
+      deferred.reject(error);
+    }
+  };
+
+  /* Prototype, constructor and name */
+  PromiseImpl.prototype = Object.create(Object.prototype);
+  PromiseImpl.prototype.constructor = PromiseImpl;
+  PromiseImpl.prototype.name = 'Promise';
+
+  /* ======================================================================== */
+  /* Promise static methods                                                   */
+  /* ======================================================================== */
+
+  /**
+   * Returns a {@link Promise} that resolves when all of the values or
+   * _then-able_ in the _iterable_ argument have resolved.
+   *
+   * If any of the promises in the _iterable_ is resolved with a rejection,
+   * the returned {@link Promise} will be rejected with the same rejection
+   * value.
+   *
+   * @param {iterable} iterable - A collection of values or _then-able_s.
+   * @returns {Promise} A {@link Promise}.
+   * @static
+   * @function all
+   * @memberof module:defers.Promise
+   */
+  Object.defineProperty(PromiseImpl, "all", {
+    enumerable: true,
+    configurable: false,
+    value: function(iterable) {
+
+      /* Check our arguments */
+      if (! Array.isArray(iterable)) {
+        return PromiseImpl.reject(new TypeError("Invalid argument"));
       }
+
+      /* Convert our elements into real promises */
+      var promises = [];
+      for (var i in iterable) {
+        promises.push(PromiseImpl.resolve(iterable[i]));
+      }
+
+      /* If we have no promises, just resolve */
+      if (promises.length == 0) return PromiseImpl.resolve([]);
+
+      /* A deferred, list of results, and pending count */
+      var deferred = new Deferred();
+      var results = new Array(promises.length);
+      var pending = promises.length;
+
+      /* Instruct all our promises */
+      for (var i = 0; i < promises.length; i++) {
+        (function(i) {
+          promises[i].then(function(success) {
+            /* On success, remember result */
+            results[i] = success;
+            /* If no more, resolve the deferred */
+            if ((-- pending) == 0) {
+              deferred.resolve(results);
+            }
+          }, function(failure) {
+            /* Reject immediately */
+            deferred.reject(failure);
+          });
+        })(i);
+      }
+
+      /* Return the deferred's promise */
+      return deferred.promise;
     }
+  });
 
-    /* Return our normalized structure */
-    return normalized;
+  /**
+   * Returns a {@link Promise} that resolves or rejects as soon as one of of
+   * the values or _then-able_ in the specified _iterable_ resolves or rejects,
+   * with the value or reason from that promise.
+   *
+   * @param {iterable} iterable - Foo.
+   * @returns {Promise} A {@link Promise}.
+   * @static
+   * @function race
+   * @memberof module:defers.Promise
+   */
+  Object.defineProperty(PromiseImpl, "race", {
+    enumerable: true,
+    configurable: false,
+    value: function(iterable) {
 
-  }
+      /* Check our arguments */
+      if (! Array.isArray(iterable)) {
+        return PromiseImpl.reject(new TypeError("Invalid argument"));
+      }
 
-  /* ======================================================================== */
-  /* Errors                                                                   */
-  /* ======================================================================== */
+      /* Use a deferred to race promises */
+      var deferred = new Deferred();
+      for (var i in iterable) {
+        PromiseImpl.resolve(iterable[i])
+          .then(function(success) {
+            deferred.resolve(success);
+          }, function(failure) {
+            deferred.reject(failure);
+          });
+      }
 
+      /* Return the deferred's promise */
+      return deferred.promise;
+    }
+  });
+
+  /**
+   * Returns a {@link Promise} object that is resolved with the given value.
+   *
+   * If the value is a _then-able_ (i.e. has a `then(...)` method), the
+   * returned promise will **follow** that _then-able_, adopting its eventual
+   * state; otherwise the returned promise will be fulfilled.
+   *
+   * @param {(*|Promise)} success - The resolution result or _then-able_ to follow.
+   * @returns {Promise} A resolved {@link Promise}.
+   * @static
+   * @function resolve
+   * @memberof module:defers.Promise
+   */
+  Object.defineProperty(PromiseImpl, "resolve", {
+    enumerable: true,
+    configurable: false,
+    value: function(success) {
+      return new PromiseImpl(function(resolve, reject) {
+        if (success && success.then && (typeof(success.then) === 'function')) {
+          success.then(resolve, reject);
+        } else {
+          resolve(success);
+        }
+      }, true);
+    }
+  });
+
+  /**
+   * Returns a {@link Promise} object that is rejected with the given reason.
+   *
+   * @param {*} failure - The rejection reason.
+   * @returns {Promise} A rejected {@link Promise}.
+   * @static
+   * @function reject
+   * @memberof module:defers.Promise
+   */
+  Object.defineProperty(PromiseImpl, "reject", {
+    enumerable: true,
+    configurable: false,
+    value: function(failure) {
+      return new PromiseImpl(function(resolve, reject) {
+        reject(failure);
+      }, true);
+    }
+  });
+
+
+
+
+  /*==========================================================================*
+   | *======================================================================* |
+   | | ESQUIRE ERRORS IMPLEMENTATION                                        | |
+   | *======================================================================* |
+   *==========================================================================*/
+
+   /* Generic Error */
   function EsquireError(message, dependencyStack) {
     message = "Esquire: " + (message || "Unknown error");
     var dependencies = "";
@@ -85,10 +402,21 @@
     }
   }
 
+   /* When modules are not found */
   function NoModuleError(name, dependencyStack) {
     EsquireError.call(this, "Module '" + name + "' not found", dependencyStack);
   };
 
+   /* When circular dependencies are detected */
+  function ModuleConstructorError(name, cause, dependencyStack) {
+    EsquireError.call(this, "Module '" + name + "' failed to initialize", dependencyStack);
+    if (cause) {
+      this.message = this.message + " [Cause: " + (cause.message ? cause.message : "[no message]") + "]";
+      this.cause = cause;
+    }
+  };
+
+   /* When circular dependencies are detected */
   function CircularDependencyError(name, dependencyStack) {
     EsquireError.call(this, "Module '" + name + "' has circular dependencies", dependencyStack);
   };
@@ -101,13 +429,22 @@
   NoModuleError.prototype.constructor = NoModuleError;
   NoModuleError.prototype.name = 'NoModuleError';
 
+  ModuleConstructorError.prototype = Object.create(EsquireError.prototype);
+  ModuleConstructorError.prototype.constructor = ModuleConstructorError;
+  ModuleConstructorError.prototype.name = 'ModuleConstructorError';
+
   CircularDependencyError.prototype = Object.create(EsquireError.prototype);
   CircularDependencyError.prototype.constructor = CircularDependencyError;
   CircularDependencyError.prototype.name = 'CircularDependencyError';
 
-  /* ======================================================================== */
-  /* Module class definition                                                  */
-  /* ======================================================================== */
+
+
+
+  /*==========================================================================*
+   | *======================================================================* |
+   | | ESQUIRE MODULE CLASSES                                               | |
+   | *======================================================================* |
+   *==========================================================================*/
 
   /**
    * @class Module
@@ -118,7 +455,7 @@
     /* Normalize names to "$global/..." */
     name = globalName(name);
     for (var i in dependencies) {
-      dependencies[i]=  globalName(dependencies[i]);
+      dependencies[i] =  globalName(dependencies[i]);
     }
 
     /**
@@ -155,22 +492,11 @@
 
   }
 
+
+  /* ======================================================================== */
+  /* Modules that are part of "$global/..."                                   */
   /* ======================================================================== */
 
-  /* A regular expression to validate "$global." or "$global/" dynamic names */
-  function isGlobal(name) {
-    return /^\$global[\/\.].+/.test(name);
-  }
-
-  function globalName(name) {
-    if (isGlobal(name)) {
-      return "$global/" + name.substring(8)
-    } else {
-      return name;
-    }
-  }
-
-  /* A $global dynamic module */
   function GlobalModule(name) {
     Module.call(this, name, ['$global'], function($global) {
 
@@ -216,18 +542,113 @@
 
 
   /* ======================================================================== */
-  /* Stuff exposed statically on the Exquire class                            */
+  /* Internal Esquire module ("$esquire", "$global", "$promise", ...          */
   /* ======================================================================== */
+
+  function InternalModule(name) {
+    Module.call(this, name, [], function() {
+      throw new EsquireError("The constructor for '" + name + "' should not be called'")
+    }, true);
+  };
+
+  InternalModule.prototype = Object.create(Module.prototype);
+  InternalModule.prototype.constructor = InternalModule;
+  InternalModule.prototype.name = "InternalModule";
+
+
+
+
+  /*==========================================================================*
+   | *======================================================================* |
+   | | ESQUIRE STATIC METHODS AND VARIABLES                                 | |
+   | *======================================================================* |
+   *==========================================================================*/
 
   /* Static list of known modules */
   var modules = {
-    "$global": new Module("$global", [], function() {
-      throw new EsquireError("The constructor for '$global' should not be called'")
-     }, true),
-    "$esquire": new Module("$esquire", [], function() {
-      throw new EsquireError("The constructor for '$esquire' should not be called'")
-     }, true)
+    "$global":   new InternalModule("$global"),
+    "$esquire":  new InternalModule("$esquire"),
+    "$promise":  new InternalModule("$promise"),
+    "$deferred": new InternalModule("$deferred")
   };
+
+  /* Flatten an array, or array of array, for aguments */
+  function flatten(iterable) {
+    if (! iterable) return [];
+
+    var array = [];
+    for (var i = 0; i < iterable.length; i ++) {
+      var current = iterable[i];
+      if (typeof(current) === 'string') {
+        array.push(current);
+      } else if (typeof(current) === 'function') {
+        array.push(current);
+      } else if (Array.isArray(current)) {
+        array = array.concat(flatten(current));
+      } else if ((typeof(current) === 'object')
+              && (typeof(current.length) === 'number')) {
+        // JavaScripts' "arguments" is an object, not an array, and on top of
+        // that PhantomJS' own implementation is not iterable... Workaround!
+        array = array.concat(flatten(current));
+      } else {
+        throw new EsquireError("Invalid dependency: " + JSON.stringify(current));
+      }
+    }
+    return array;
+  };
+
+
+  /* Normalize and validate an array into a array/function object */
+  function normalize() {
+    var array = flatten(arguments);
+
+    /* The normalized structure */
+    var normalized = {
+      arguments: [],
+      function: null
+    };
+
+    /* No elements in the array? Empty */
+    if (! array.length) return normalized;
+
+    /* Set the function only if it's the last element */
+    if (typeof(array[array.length - 1]) === 'function') {
+      normalized.function = array.splice(-1)[0];
+    }
+
+    /* Validate all arguments as strings */
+    for (var i in array) {
+      var argument = array[i];
+      if (typeof(argument) === 'string') {
+        normalized.arguments.push(argument);
+      } else {
+        throw new EsquireError("Found " + typeof(argument) + " but needed string: " + argument);
+      }
+    }
+
+    /* Return our normalized structure */
+    return normalized;
+  };
+
+
+  /* A regular expression to validate "$global." or "$global/" dynamic names */
+  function isGlobal(name) {
+    return /^\$global[\/\.].+/.test(name);
+  }
+
+
+  /* Normalize "$global.any" into "$global/any" */
+  function globalName(name) {
+    if (isGlobal(name)) {
+      return "$global/" + name.substring(8)
+    } else {
+      return name;
+    }
+  }
+
+  /* ======================================================================== */
+  /* Methods below will be public                                             */
+  /* ======================================================================== */
 
   /**
    * Define a {@link Module} as available to Esquire
@@ -383,9 +804,14 @@
 
   }
 
-  /* ======================================================================== */
-  /* Esquire constructor                                                      */
-  /* ======================================================================== */
+
+
+
+  /*==========================================================================*
+   | *======================================================================* |
+   | | ESQUIRE INJECTION IMPLEMENTATION                                     | |
+   | *======================================================================* |
+   *==========================================================================*/
 
   /**
    * Create a new {@link Esquire} injector instance.
@@ -403,10 +829,18 @@
    */
   function Esquire() {
     /* Proper construction */
-    if (!(this instanceof Esquire)) return new Deferred();
+    if (!(this instanceof Esquire)) return new Esquire(Promise);
 
-    /* Our and cache */
-    var cache = { "$global": global, "$esquire": this };
+    /* Promise implementation */
+    var Promise = global.Promise || PromiseImpl;
+
+    /* Our cache */
+    var cache = {
+      "$global":   global,
+      "$esquire":  this,
+      "$promise":  Promise,
+      "$deferred": Deferred
+    };
 
     /* Create a new instance from a defined module */
     function create(module, dependencyStack) {
@@ -434,12 +868,43 @@
 
       }
 
-      /* Invoke the constructor */
-      var instance = module.constructor.apply(module, parameters);
+      /* Clone dependency stack for errors */
+      var cloneStack = dependencyStack.slice(0);
+
+      /* Return a promise */
+      var promise = new Promise(function(resolve, reject) {
+        /* When all parameters have been resolved... */
+        Promise.all(parameters).then(
+          function(success) {
+            try {
+              /* ... then call the constructor */
+              var result = module.constructor.apply(module, success);
+              Promise.resolve(result).then(
+                function(success) { resolve(success) },
+                function(failure) {
+                  /* On failure from a promise, just make sure we wrap the error */
+                  reject(new ModuleConstructorError(module.name, failure, cloneStack));
+                  reject(failure);
+                }
+              );
+
+            } catch (error) {
+              /* Errors from invoking the constructor head down here */
+              reject(new ModuleConstructorError(module.name, error, cloneStack));
+            }
+
+          }, function(failure) {
+            reject(failure);
+          }
+        );
+
+      });
+      // var instance = module.constructor.apply(module, parameters);
       if (module.name && (! module.$$dynamic)) {
-        cache[module.name] = instance;
+        cache[module.name] = promise;
       }
-      return instance;
+      return promise;
+      // return instance;
 
     }
 
@@ -535,9 +1000,16 @@
         throw new EsquireError("Callback for injection unspecified");
       }
 
+      //console.log("SHOULD INJECT", args.function.toString());
+
       /* Create a fake "null" module and return its value */
       var module = new Module(null, args.arguments, args.function);
-      return create(module, []);
+      try {
+        return create(module, []);
+      } catch (error) {
+        //console.log("GOT ERROR", error);
+        return Promise.reject(error);
+      }
 
     };
 
@@ -549,15 +1021,20 @@
 
   }
 
+
   /* ======================================================================== */
-  /* Esquire static members                                                   */
+  /* Esquire class static members                                             */
   /* ======================================================================== */
 
   Object.defineProperties(Esquire, {
+    "$$script":    { enumerable: false, configurable: false, value: EsquireScript.toString() },
+    "$$normalize": { enumerable: false, configurable: false, value: normalize },
+    "$$Promise":   { enumerable: false, configurable: false, value: PromiseImpl },
+    "$$Deferred":  { enumerable: false, configurable: false, value: Deferred },
+
+    /* Public methods from above */
     "define":      { enumerable: true,  configurable: false, value: define },
     "resolve":     { enumerable: true,  configurable: false, value: resolve },
-    "$$normalize": { enumerable: false, configurable: false, value: normalize },
-    "$$script":    { enumerable: false, configurable: false, value: EsquireScript.toString() },
 
     /**
      * An unmodifiable dictionary of all {@link Module}s known by
@@ -607,24 +1084,23 @@
     }}
   });
 
-  /* If something was loaded before, just copy over */
-  if (global.Esquire) {
-    for (var member in global.Esquire) {
-      Object.defineProperty(Esquire, member, {
-        enumerable: true,
-        configurable: false,
-        value: global.Esquire[member]
-      });
-    }
-  }
+
+
+
+  /*==========================================================================*
+   | *======================================================================* |
+   | | ESQUIRE IN THE GLOBAL CONTEXT                                        | |
+   | *======================================================================* |
+   *==========================================================================*/
 
   /* Set our Esquire function globally */
-  global.Esquire = Esquire;
+  if (global.Esquire) {
+    throw new Error("Esquire already defined in global scope");
+  } else {
+    global.Esquire = Esquire;
+  }
 
-  /* ======================================================================== */
-  /* Esquire static injection                                                 */
-  /* ======================================================================== */
-
+  /* Our static Esquire instance */
   var staticEsquire = new Esquire();
 
   /**

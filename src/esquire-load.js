@@ -2,112 +2,7 @@
 
 (function(window) {
 
-  /* ======================================================================== */
-  /* A quick-and-dirty Promise-like ThenAble                                  */
-  /* ======================================================================== */
-
-  function ThenAble(onSuccess, onFailure) {
-    var status = 0;
-    var result = null;
-    var chain = [];
-
-    var resolve = function(success) {
-      if (success && (typeof(success.then) === 'function')) {
-        /* If we were given a "then-able" just call ourselves back */
-        success.then(function(success) {
-          resolve(success);
-        }, function(failure) {
-          reject(failure);
-        });
-
-      } else {
-        /* We were given a success, resolve immediately */
-        if (status == 0) {
-          result = success;
-          status = 1;
-          if (onSuccess) try {
-            result = onSuccess(result);
-          } catch (error) {
-            result = error;
-            status = -1;
-          }
-          notify(chain);
-        }
-      }
-    }
-
-    var reject = function(failure) {
-      if (status == 0) {
-        result = failure;
-        status = -1;
-        if (onFailure) try {
-          result = onFailure(result);
-          status = 1;
-        } catch (error) {
-          result = error;
-        }
-        notify(chain);
-      }
-    }
-
-    var then = function(onSuccess, onFailure) {
-      var chained = new ThenAble(onSuccess, onFailure);
-      if (status == 0) {
-        chain.push(chained);
-      } else {
-        notify([chained]);
-      }
-      return chained.promise;
-    }
-
-    var notify = function(chain) {
-      var method = status > 0 ? "resolve" :
-                   status < 0 ? "reject" :
-                   null;
-      if (method) for (var i in chain) {
-        chain[i][method](result);
-      }
-    }
-
-    var promise = Object.defineProperties(new Object(), {
-      "then":  { enumerable: true, configurable: false, value: then },
-      "catch": { enumerable: true, configurable: false, value:
-        function(onFailure) {
-          return then(null, onFailure);
-        }
-      }
-    });
-
-    return Object.defineProperties(this, {
-      "promise": { enumerable: true, configurable: false, value: promise },
-      "resolve": { enumerable: true, configurable: false, value: resolve },
-      "reject":  { enumerable: true, configurable: false, value: reject  }
-
-    });
-
-  }
-
-  /* ======================================================================== */
-  /* Internal variable definitions and functions                              */
-  /* ======================================================================== */
-
-  /* Flatten an array, or array of array, for aguments */
-  function flatten(iterable) {
-    if (! iterable) return [];
-
-    var array = [];
-    for (var i = 0; i < iterable.length; i ++) {
-      var current = iterable[i];
-      if (typeof(current) == 'string') {
-        array.push(current);
-      } else if (Array.isArray(current)) {
-        array = array.concat(flatten(current));
-      } else {
-        throw new Error("Esquire: Invalid dependency: " + current);
-      }
-    }
-    return array;
-  };
+  if (! window.Esquire) throw new Error("Esquire not available");
 
   /* ======================================================================== */
   /* Event managemet for script loading                                       */
@@ -201,7 +96,7 @@
     var scriptsParent = firstScript.parentNode;
 
     /* Our then-able for notifications */
-    var thenable = new ThenAble(function(success) {
+    var thenable = new Esquire.$$Deferred(function(success) {
         return success;
       }, function(failure) {
         throw failure;
@@ -211,7 +106,7 @@
     thenable.remaining = 0;
 
     /* Create all our script tags */
-    var locations = flatten(arguments);
+    var locations = Esquire.$$normalize(arguments).arguments;
     var scripts = [];
     for (var i in locations) {
       (function(location) {
