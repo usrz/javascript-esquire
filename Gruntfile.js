@@ -26,8 +26,8 @@ module.exports = function(grunt) {
                'lib/promises.test.js',
                'test/deferred.test.js',
                'test/promise.test.js',
-               'test/esquire-inject.test.js',
-               'test/esquire-global.test.js',
+               'test/esquire.test.js',
+               'test/global.test.js',
                'test/modules/*.js' ]
       }
     },
@@ -35,12 +35,12 @@ module.exports = function(grunt) {
     /* Uglify task */
     'uglify': {
       'inject': {
-        src: 'src/esquire-inject.js',
-        dest: 'esquire-inject.min.js'
+        src: 'src/esquire.js',
+        dest: 'esquire.min.js'
       },
       'defaut': {
-        src: [ 'src/esquire-inject.js', 'src/esquire-load.js' ],
-        dest: 'esquire.min.js'
+        src: [ 'src/esquire.js', 'src/loader.js' ],
+        dest: 'esquire-full.min.js'
       }
     },
 

@@ -12,20 +12,25 @@ module.exports = function(config) {
 
     /* These need to be in order */
     files: [
-      'src/esquire-inject.js',
-      'src/esquire-load.js',
       'lib/promises.test.js',
 
+      /* Order here is important */
+      'src/esquire.js',
+      'src/loader.js',
+
+      /* Execution order of test */
       'test/deferred.test.js',
       'test/promise.test.js',
-      'test/esquire-inject.test.js',
-      'test/esquire-global.test.js',
-      'test/esquire-loader.test.js',
+      'test/esquire.test.js',
+      'test/global.test.js',
+      'test/loader.test.js',
+
+      /* Pre-loaded modules */
       'test/modules/*.js',
 
-      /* To be loaded by Esquire */
-      { pattern: 'test/**/*.js',   included: false },
-      { pattern: 'test/**/*.html', included: false },
+      /* To be loaded during loader test */
+      { pattern: 'test/browser/*', included: false },
+      { pattern: 'test/load/*',    included: false },
     ],
 
     /* Pretty */

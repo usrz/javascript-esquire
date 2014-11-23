@@ -5,7 +5,7 @@ var fs = require('fs');
 
 /* Just load if we never were initialized */
 if (!('Esquire' in global)) {
-  require("./src/esquire-inject.js");
+  require("./src/esquire.js");
 }
 
 /* We are sure we have Esquire in globals */
