@@ -18,11 +18,11 @@ module.exports = function(config) {
 
     /* These need to be in order */
     files: [
-      'src/mocha.js',
-
       /* Order here is important */
       'src/esquire.js',
       'src/loader.js',
+      'ext/mocha.js',
+      'ext/karma.js',
 
       /* Execution order of test */
       'test/deferred.test.js',
@@ -31,10 +31,10 @@ module.exports = function(config) {
       'test/global.test.js',
       'test/loader.test.js',
 
-      /* Pre-loaded modules */
+      /* Modules */
       'test/modules/*.js',
 
-      /* To be loaded during loader test */
+      /* All these files will be loaded by the loader */
       { pattern: 'test/browser/*', included: false },
       { pattern: 'test/loader/*',  included: false },
     ],

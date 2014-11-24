@@ -1,9 +1,7 @@
 module.exports = function(grunt) {
 
-  /* Chai for simple mocha */
-  var chai = require('chai');
-  chai.config.includeStack = true;
-  global.expect = chai.expect;
+  /* Inject our "esquire-mocha" task */
+  require("./ext/grunt.js")(grunt);
 
   /* Grunt initialization */
   grunt.initConfig({
@@ -20,11 +18,9 @@ module.exports = function(grunt) {
     },
 
     /* Simple mocha */
-    simplemocha: {
+    "esquire-mocha": {
       'default': {
-        src: [ 'index.js',
-               'src/mocha.js',
-               'test/deferred.test.js',
+        src: [ 'test/deferred.test.js',
                'test/promise.test.js',
                'test/esquire.test.js',
                'test/global.test.js',
@@ -75,7 +71,6 @@ module.exports = function(grunt) {
 
   /* Load our plugins */
   grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-simple-mocha');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-jsdoc-ng');
   grunt.loadNpmTasks('grunt-gh-pages');
