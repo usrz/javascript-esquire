@@ -20,13 +20,13 @@ function EsquireAdapter() {
 /* Prototype and static members */
 EsquireAdapter.prototype = Esquire.prototype;
 
-Object.defineProperty(EsquireAdapter, 'modules', {
-  enumerable: true, configurable: false, get: function() { return global.Esquire.modules }
-});
 
-EsquireAdapter.define  = function() { return global.Esquire.define .call(global.Esquire, arguments) };
-EsquireAdapter.resolve = function() { return global.Esquire.resolve.call(global.Esquire, arguments) };
-EsquireAdapter.module  = function() { return global.Esquire.module .call(global.Esquire, arguments) };
+Object.defineProperties(EsquireAdapter, {
+  'define':  { enumerable: true, configurable: false, value: function() { return global.Esquire.define .apply(global.Esquire, arguments) } },
+  'module':  { enumerable: true, configurable: false, value: function() { return global.Esquire.module .apply(global.Esquire, arguments) } },
+  'resolve': { enumerable: true, configurable: false, value: function() { return global.Esquire.resolve.apply(global.Esquire, arguments) } },
+  'modules': { enumerable: true, configurable: false, get:   function() { return global.Esquire.modules } }
+});
 
 /* Export our adapter */
 module.exports = EsquireAdapter;

@@ -20,7 +20,8 @@ module.exports = function(grunt) {
     /* Simple mocha */
     "esquire-mocha": {
       'default': {
-        src: [ 'test/deferred.test.js',
+        src: [ 'test/node.test.js',
+               'test/deferred.test.js',
                'test/promise.test.js',
                'test/esquire.test.js',
                'test/global.test.js',
