@@ -78,7 +78,7 @@ module.exports = function(grunt) {
 
   /* Default task: requirejs then uglify */
   grunt.registerTask('default', ['test', 'uglify']);
-  grunt.registerTask('test',    ['karma', 'simplemocha', 'uglify']);
+  grunt.registerTask('test',    ['karma', 'esquire-mocha', 'uglify']);
   grunt.registerTask('docs',    ['jsdoc-ng', 'gh-pages']);
 
 };
