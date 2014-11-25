@@ -51,6 +51,7 @@ module.exports = function(grunt) {
           "plugins": ["plugins/markdown"],
           "templates": {
             "cleverLinks": true,
+            "windowTitle": "Esquire v." + require('./package.json').version
           },
           "markdown": {
             "parser": "gfm",
