@@ -384,9 +384,9 @@
 
     Error.call(this, message);
     this.message = message;
-    if (this.stack) {
-      var stack = this.stack;
-      stack = stack.replace(new RegExp("^" + this.name + "\n"), "");
+    var stack = this.stack || new Error().stack;
+    if (stack) {
+      stack = stack.replace(new RegExp("^(Error|" + this.name + ")\n"), "");
       this.stack = this.name + ": " + this.message + "\n" + stack;
     }
   }
@@ -1026,14 +1026,11 @@
         throw new EsquireError("Callback for injection unspecified");
       }
 
-      //console.log("SHOULD INJECT", args.function.toString());
-
       /* Create a fake "null" module and return its value */
       var module = new Module(null, args.arguments, args.function);
       try {
         return create(module, []);
       } catch (error) {
-        //console.log("GOT ERROR", error);
         return Promise.reject(error);
       }
 
