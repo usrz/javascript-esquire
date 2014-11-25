@@ -25,6 +25,17 @@ module.exports = function(grunt) {
     /* Create a new Mocha instance */
     var mocha = new (require('mocha'))(this.options());
 
+    /* We want to trap any call to global esquire and remember the promises */
+    var esquire = global.esquire;
+    var promises = [];
+
+    /* Replace esquire(...) */
+    global.esquire = function() {
+      var promise = esquire.apply(null, arguments);
+      promises.push(promise);
+      return promise;
+    }
+
     /* Tell mocha what files need to be loaded */
     this.filesSrc.forEach(function (file) {
       mocha.addFile(file);
@@ -36,14 +47,15 @@ module.exports = function(grunt) {
 
     /* Asynchronously call mocha */
     var done = this.async();
-    Esquire.tests()
-    .then(mocha.run(function(errCount) {
-      //grunt.log.error("Failed injecting tests: " + failure.message);
-      done(errCount === 0);
-    }), function(failure) {
-      grunt.log.error("Failed injecting tests: " + failure.message);
-      done(failure);
-    })
+
+    grunt.verbose.ok("Esquire: Waiting for " + promises.length + " injections before running Mocha");
+    Esquire.$$Promise.all(promises)
+      .then(mocha.run(function(errCount) {
+        done(errCount === 0);
+      }), function(failure) {
+        grunt.log.error("Failed injecting tests: " + failure.message);
+        done(failure);
+      })
 
   });
 

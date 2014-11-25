@@ -7,6 +7,19 @@
 
   /* If we have karma... */
   if (window.__karma__) {
+
+    /* We want to trap any call to global esquire and remember the promises */
+    var esquire = window.esquire;
+    var promises = [];
+
+    /* Replace esquire(...) */
+    window.esquire = function() {
+      var promise = esquire.apply(null, arguments);
+      promises.push(promise);
+      return promise;
+    }
+
+    /* Instrument Karma */
     var karma = window.__karma__;
     console.log("Esquire: We have Karma...");
 
@@ -57,14 +70,19 @@
       }
 
       /* Inject tests if we have to */
-      if (Esquire.tests) promise = promise.then(Esquire.tests);
+      if (promises.length > 0) {
+        promise = promise.then(function(success) {
+          console.log("Esquire: Waiting for " + promises.length + " injections before running Karma");
+          return Esquire.$$Promise.all(promises);
+        });
+      }
 
-      /*  */
+      /* Now run Karma... */
       promise.then(function(success) {
         console.log("Esquire: Running Karma...");
         karma.start();
       }, function(failure) {
-        console.error("Esquire: Unable to run Karma", failure);
+        console.error("Esquire: Unable to run Karma", failure, failure.stack);
         karma.error(failure);
       });
 
