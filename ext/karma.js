@@ -82,8 +82,15 @@
         console.log("Esquire: Running Karma...");
         karma.start();
       }, function(failure) {
-        console.error("Esquire: Unable to run Karma", failure, failure.stack);
-        karma.error(failure);
+        var message = "Esquire: Unable to run Karma: " + failure.name + " - " + failure.message;
+        if (failure.stack) message += "\n" + failure.stack;
+        var error = failure.cause;
+        while (error) {
+          message += "\n- Caused by: " + error.name + " - " + error.message;
+          if (error.stack) message += "\n" + error.stack;
+          error = error.cause;
+        }
+        karma.error(message);
       });
 
     }
