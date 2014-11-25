@@ -1,6 +1,6 @@
 {
   "name": "esquire",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "main": "node-adapter.js",
   "description": "USRZ Esquire API",
   "repository": {
