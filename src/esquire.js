@@ -5,6 +5,14 @@
 
 (function EsquireScript(global) {
 
+  /* We might need a working console */
+  if (!global.console)       global.console = {};
+  if (!global.console.error) global.console.error = function(){};
+  if (!global.console.warn)  global.console.warn  = function(){};
+  if (!global.console.log)   global.console.log   = function(){};
+  if (!global.console.info)  global.console.info  = function(){};
+  if (!global.console.debug) global.console.debug = function(){};
+
   /*==========================================================================*
    | *======================================================================* |
    | | DEFERRED IMPLEMENTATION                                              | |
@@ -22,6 +30,7 @@
    *   return deferred.promise;
    * });
    */
+  var deferredId = 0;
   function Deferred(onSuccess, onFailure) {
 
     /* Proper construction */
@@ -44,6 +53,7 @@
 
     var deferred = this;
     Object.defineProperties(this, {
+      "$$id": { enumerable: false, configurable: false, value: (++deferredId) },
 
       /**
        * Resolve this instance's derived {@link Deferred#promise promise} with
@@ -58,6 +68,7 @@
        */
       "resolve": { enumerable: true, configurable: false, value: function(success) {
         if (success && (typeof(success.then) === 'function')) {
+
           /* If we were given a "then-able" just call ourselves back */
           success.then(function(success) {
             deferred.resolve(success);
@@ -66,6 +77,7 @@
           });
 
         } else {
+
           /* We were given a success, resolve immediately */
           if (status == 0) {
             result = success;
@@ -109,6 +121,7 @@
        */
       "promise": { enumerable: true, configurable: false, value:
         Object.defineProperties(new Object(), {
+          "$$id":  { enumerable: false, configurable: false, value: deferred.$$id },
           "then":  { enumerable: true, configurable: false, value: function(onSuccess, onFailure) {
             var chained = new Deferred(onSuccess, onFailure);
             if (status == 0) {
@@ -171,41 +184,41 @@
     /* Internal deferred */
     var deferred = new Deferred();
 
-    /**
-     * Appends fulfillment and rejection handlers to this {@link Promise}, and
-     * returns a **new** promise resolving to the return value of the called
-     * handler.
-     *
-     * @param {function} [onSuccess] - The handler to call when this
-     *        {@link Promise} has been successfully resolved.
-     * @param {function} [onFailure] - The handler to call when this
-     *        {@link Promise} has been rejected.
-     * @returns {Promise} A new {@link Promise} resolving to the return value
-     *          of the called handler
-     * @function module:$promise.Promise#then
-     */
-    Object.defineProperty(this, 'then', {
-      enumerable: true,
-      configurable: false,
-      value: deferred.promise['then']
-    });
+    Object.defineProperties(this, {
+      '$$id': { enumerable: false, configurable: false, value: deferred.$$id },
 
-    /**
-     * Appends a rejection handler to this {@link Promise}, and returns a
-     * **new** promise resolving to the return value of the called handler.
-     *
-     * This is equivalent to calling `then(null, onFailure)`.
-     *
-     * @param {function} [onFailure] - The handler to call when this
-     *        {@link Promise} has been rejected.
-     * @returns {Promise} A new {@link Promise} resolving to the return value
-     *          of the called handler
-     * @function module:$promise.Promise#catch
-     */
-    Object.defineProperty(this, 'catch', {
-      enumerable: true,
-      configurable: false,
-      value: deferred.promise['catch']
+      /**
+       * Appends fulfillment and rejection handlers to this {@link Promise}, and
+       * returns a **new** promise resolving to the return value of the called
+       * handler.
+       *
+       * @param {function} [onSuccess] - The handler to call when this
+       *        {@link Promise} has been successfully resolved.
+       * @param {function} [onFailure] - The handler to call when this
+       *        {@link Promise} has been rejected.
+       * @returns {Promise} A new {@link Promise} resolving to the return value
+       *          of the called handler
+       * @function module:$promise.Promise#then
+       */
+      'then': { enumerable: true, configurable: false, value: function() {
+        return deferred.promise.then.apply(deferred.promise, arguments);
+      }},
+
+      /**
+       * Appends a rejection handler to this {@link Promise}, and returns a
+       * **new** promise resolving to the return value of the called handler.
+       *
+       * This is equivalent to calling `then(null, onFailure)`.
+       *
+       * @param {function} [onFailure] - The handler to call when this
+       *        {@link Promise} has been rejected.
+       * @returns {Promise} A new {@link Promise} resolving to the return value
+       *          of the called handler
+       * @function module:$promise.Promise#catch
+       */
+      'catch': { enumerable: true, configurable: false, value: function() {
+        return deferred.promise.catch.apply(deferred.promise, arguments);
+      }}
     });
 
     /* Execute our promise */
@@ -247,34 +260,40 @@
         return PromiseImpl.reject(new TypeError("Invalid argument"));
       }
 
-      /* Convert our elements into real promises */
-      var promises = [];
-      for (var i in iterable) {
-        promises.push(PromiseImpl.resolve(iterable[i]));
+      /* If we have no promises, just resolve */
+      var deferred = new Deferred();
+      if (iterable.length == 0) {
+        deferred.resolve([]);
+        return deferred.promise;
       }
 
-      /* If we have no promises, just resolve */
-      if (promises.length == 0) return PromiseImpl.resolve([]);
-
       /* A deferred, list of results, and pending count */
-      var deferred = new Deferred();
-      var results = new Array(promises.length);
-      var pending = promises.length;
+      var results = new Array(iterable.length);
+      var pending = iterable.length;
 
       /* Instruct all our promises */
-      for (var i = 0; i < promises.length; i++) {
+      for (var i = 0; i < iterable.length; i++) {
         (function(i) {
-          promises[i].then(function(success) {
-            /* On success, remember result */
-            results[i] = success;
+          var current = iterable[i];
+          if (current && (typeof(current.then) === 'function')) {
+            current.then(function(success) {
+              /* On success, remember result */
+              results[i] = success;
+              /* If no more, resolve the deferred */
+              if ((-- pending) == 0) {
+                deferred.resolve(results);
+              }
+            }, function(failure) {
+              /* Reject immediately */
+              deferred.reject(failure);
+            });
+          } else {
+            results[i] = current;
             /* If no more, resolve the deferred */
             if ((-- pending) == 0) {
               deferred.resolve(results);
             }
-          }, function(failure) {
-            /* Reject immediately */
-            deferred.reject(failure);
-          });
+          }
         })(i);
       }
 
@@ -305,12 +324,16 @@
       /* Use a deferred to race promises */
       var deferred = new Deferred();
       for (var i in iterable) {
-        PromiseImpl.resolve(iterable[i])
-          .then(function(success) {
+        var current = iterable[i];
+        if (current && (typeof(current.then) === 'function')) {
+          current.then(function(success) {
             deferred.resolve(success);
           }, function(failure) {
             deferred.reject(failure);
           });
+        } else {
+          deferred.resolve(current);
+        }
       }
 
       /* Return the deferred's promise */
@@ -333,13 +356,17 @@
     enumerable: true,
     configurable: false,
     value: function(success) {
-      return new PromiseImpl(function(resolve, reject) {
-        if (success && success.then && (typeof(success.then) === 'function')) {
-          success.then(resolve, reject);
-        } else {
-          resolve(success);
-        }
-      }, true);
+      var deferred = new Deferred();
+      if (success && typeof(success.then) === 'function') {
+        success.then(function(success) {
+          deferred.resolve(success)
+        }, function(failure) {
+          deferred.reject(failure);
+        });
+      } else {
+        deferred.resolve(success);
+      }
+      return deferred.promise;
     }
   });
 
@@ -354,9 +381,9 @@
     enumerable: true,
     configurable: false,
     value: function(failure) {
-      return new PromiseImpl(function(resolve, reject) {
-        reject(failure);
-      }, true);
+      var deferred = new Deferred();
+      deferred.reject(failure);
+      return deferred.promise;
     }
   });
 
@@ -874,50 +901,66 @@
       /* Clone dependency stack for errors */
       var cloneStack = dependencyStack.slice(0);
 
-      /* Return a promise */
-      var promise = new Promise(function(resolveCallback, rejectCallback) {
+      /* Create a deferred and *IMMEDIATELY* cache the promise */
+      var deferred = new Deferred();
+      if (module.name && (! module.$$dynamic)) {
+        cache[module.name] = deferred.promise;
+      }
 
-        /* Set a timeout */
-        var timeoutMillis = timeout - (dependencyStack.length * 10);
-        var timeoutId = global.setTimeout(function() {
-          rejectCallback(new EsquireError("Timeout reached waiting for module '" + module.name + "'", cloneStack));
-        }, timeoutMillis < 50 ? 50 : timeoutMillis);
+      /* Set a timeout, after which module construction will fail */
+      var timeoutMillis = timeout - (cloneStack.length * 5);
+      if (timeoutMillis < 50) timeoutMillis = 50;
+      var timeoutId = global.setTimeout(function() {
+        var error = new EsquireError("Timeout reached waiting for module '" + module.name + "'", cloneStack);
+        deferred.reject(error);
+      }, timeoutMillis);
 
-        /* Clear timeouts and resolve/reject */
-        var resolve = function(success) { global.clearTimeout(timeoutId); resolveCallback(success) };
-        var reject  = function(failure) { global.clearTimeout(timeoutId); rejectCallback (failure) };
+      /* Clear timeouts and resolve */
+      var resolveCallback = function(success) {
+        global.clearTimeout(timeoutId);
 
-        /* When all parameters have been resolved... */
-        Promise.all(parameters).then(
-          function(success) {
-            try {
-              /* ... then call the constructor */
-              var result = module.constructor.apply(module, success);
-              Promise.resolve(result).then(
-                function(success) { resolve(success) },
-                function(failure) {
-                  /* On failure from a promise, just make sure we wrap the error */
-                  reject(new ModuleConstructorError(module.name, failure, cloneStack));
-                  reject(failure);
-                }
-              );
+        /* Cache the resolved value */
+        if (module.name && (! module.$$dynamic)) {
+          cache[module.name] = success;
+        }
 
-            } catch (error) {
-              /* Errors from invoking the constructor head down here */
-              reject(new ModuleConstructorError(module.name, error, cloneStack));
+        /* Resolve the deferred */
+        deferred.resolve(success);
+      };
+
+      /* Clear timeouts and reject */
+      var rejectCallback  = function(failure) {
+        global.clearTimeout(timeoutId);
+        deferred.reject(failure);
+      };
+
+      /* When all parameters have been resolved... */
+      Promise.all(parameters).then(
+        function(success) {
+          try {
+            /* ... then call the constructor */
+            var result = module.constructor.apply(module, success);
+            if (result && (typeof(result.then) === 'function')) {
+              result.then(resolveCallback, function(failure) {
+                var error = new ModuleConstructorError(module.name, failure, cloneStack);
+                rejectCallback(error);
+              });
+            } else {
+              resolveCallback(result);
             }
 
-          }, function(failure) {
-            reject(failure);
+          } catch (error) {
+            /* Errors from invoking the constructor head down here */
+            rejectCallback(new ModuleConstructorError(module.name, error, cloneStack));
           }
-        );
 
-      });
+        }, function(failure) {
+          rejectCallback(failure);
+        }
+      );
 
-      if (module.name && (! module.$$dynamic)) {
-        cache[module.name] = promise;
-      }
-      return promise;
+      /* Return the promise */
+      return deferred.promise;
 
     }
 
