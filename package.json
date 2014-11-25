@@ -2,7 +2,7 @@
   "name": "esquire",
   "version": "1.0.1",
   "main": "node-adapter.js",
-  "description": "USRZ Esquire API",
+  "description": "Esquire: asynchronous injection framework",
   "repository": {
     "type": "git",
     "url": "git://github.com/usrz/javascript-esquire.git"
