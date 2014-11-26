@@ -581,6 +581,9 @@
    | *======================================================================* |
    *==========================================================================*/
 
+  /* Listeners (should contain only "define") */
+  var listeners = { define: [] };
+
   /* Static list of known modules */
   var modules = {
     "$global":   new InternalModule("$global"),
@@ -740,9 +743,20 @@
       constructor = args.function;
     }
 
-    /* Remember and return a new module */
-    modules[name] = new Module(name, dependencies, constructor);
-    return modules[name];
+    /* Create and remember our new module */
+    var module = modules[name] = new Module(name, dependencies, constructor);
+    if (module.$$dynamic) return module;
+
+    /* Notify all "define" listeners */
+    for (var i in listeners['define']) {
+      try {
+        listeners['define'][i](module);
+      } catch (error) {
+        console.error("Error notifying listener", error);
+      }
+    }
+
+    return module;
   };
 
   /**
@@ -1147,6 +1161,25 @@
       if (name in modules) return modules[name];
       if (isGlobal(name)) return new GlobalModule(name);
       return null;
+    }},
+
+    /**
+     * Set up notifications for events.
+     *
+     * The only event supported currently is the `define` event.
+     *
+     * @static
+     * @function on
+     * @param {string} event - The name of the event to listen for.
+     * @param {function} callback - The callback function to be invoked.
+     * @memberof Esquire
+     * @returns {Esquire} The static {@link Esquire} class.
+     */
+    "on": { enumerable: true, configurable: false, value: function(event, listener) {
+      if (!(typeof(event) === 'string')) throw new EsquireError("Event name must be a string");
+      if (!(typeof(listener) === 'function')) throw new EsquireError("Listener must be a function");
+      if (event === 'define') listeners.define.push(listener);
+      return Esquire;
     }}
   });
 
