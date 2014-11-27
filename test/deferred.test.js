@@ -154,6 +154,45 @@
 
         });
 
+        /* ==================================================================== */
+
+        promises("should timeout with no rejection specified", function(done) {
+
+          var deferred = new Deferred(10);
+
+          setTimeout(function() {
+            deferred.resolve("this is bad...");
+          }, 20)
+
+          return deferred.promise.then(wrap(done, function(result) {
+            throw new Error("Should not resolve");
+          }), function(failure) {
+            expect(failure).to.be.instanceof(Error);
+            expect(failure.message).to.be.equal('Timeout waiting for resolution/rejection');
+          })
+
+        });
+
+        /* ==================================================================== */
+
+        promises("should timeout with a specific rejection", function(done) {
+
+          // empty string, not null but also not truthy...
+          var deferred = new Deferred(10, "");
+
+          setTimeout(function() {
+            deferred.resolve("this is bad...");
+          }, 20)
+
+          return deferred.promise.then(wrap(done, function(result) {
+            throw new Error("Should not resolve");
+          }), function(failure) {
+            expect(failure).to.be.a('string');
+            expect(failure).to.be.equal('');
+          })
+
+        });
+
       });
     }
   });

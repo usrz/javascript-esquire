@@ -96,11 +96,7 @@
     var scriptsParent = firstScript.parentNode;
 
     /* Our then-able for notifications */
-    var thenable = new Esquire.$$Deferred(function(success) {
-        return success;
-      }, function(failure) {
-        throw failure;
-      });
+    var thenable = new Esquire.$$Deferred();
 
     /* Mark the number of remainig scripts on the then-able */
     thenable.remaining = 0;

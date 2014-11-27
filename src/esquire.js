@@ -19,22 +19,8 @@
    | *======================================================================* |
    *==========================================================================*/
 
-  /**
-   * Create a new {@link Deferred} instance.
-   *
-   * @class module:$deferred.Deferred
-   * @example -
-   * Esquire.define("myModule", ['$deferred'], function(Deferred) {
-   *   var deferred = new Deferred();
-   *   // ....
-   *   return deferred.promise;
-   * });
-   */
-  var deferredId = 0;
-  function Deferred(onSuccess, onFailure) {
-
-    /* Proper construction */
-    if (!(this instanceof Deferred)) return new Deferred(onSuccess, onFailure);
+  /* Internal "Deferring" class, we'll expose "Deferred" below */
+  function Deferring(onSuccess, onFailure) {
 
     /* Statuses: 0 -> pending, -1 -> rejected, 1 -> resolved */
     var status = 0;
@@ -53,8 +39,6 @@
 
     var deferred = this;
     Object.defineProperties(this, {
-      "$$id": { enumerable: false, configurable: false, value: (++deferredId) },
-
       /**
        * Resolve this instance's derived {@link Deferred#promise promise} with
        * the specified _success_ value.
@@ -121,9 +105,8 @@
        */
       "promise": { enumerable: true, configurable: false, value:
         Object.defineProperties(new Object(), {
-          "$$id":  { enumerable: false, configurable: false, value: deferred.$$id },
           "then":  { enumerable: true, configurable: false, value: function(onSuccess, onFailure) {
-            var chained = new Deferred(onSuccess, onFailure);
+            var chained = new Deferring(onSuccess, onFailure);
             if (status == 0) {
               chain.push(chained);
             } else {
@@ -140,7 +123,57 @@
   };
 
   /* Prototype, constructor and name */
-  Deferred.prototype = Object.create(Object.prototype);
+  Deferring.prototype = Object.create(Object.prototype);
+  Deferring.prototype.constructor = Deferring;
+  Deferring.prototype.name = 'Deferring';
+
+  /**
+   * Create a new {@link Deferred} instance.
+   *
+   * @param {number} [timeout] The (optional) timeout after which this
+   *                           {@link Deferred} will be automatically rejected.
+   *                           This must be a number greater or equal to zero.
+   * @param {*} [rejection] The reason with which this {@link Deferred} will be
+   *                        automatically rejected after the specified `timeout`.
+   *                        If `null` a generic {@link Error} will be used.
+   * @class module:$deferred.Deferred
+   * @example -
+   * Esquire.define("myModule", ['$deferred'], function(Deferred) {
+   *   var deferred = new Deferred();
+   *   // ....
+   *   return deferred.promise;
+   * });
+   */
+  function Deferred(timeout, rejection) {
+
+    /* Proper construction */
+    if (!(this instanceof Deferred)) return new Deferred(timeout, rejection);
+
+    if (timeout === undefined) {
+      Deferring.call(this);
+
+    } else if ((typeof(timeout) === 'number') && (timeout >= 0)) {
+      if (rejection == null) rejection = new Error("Timeout waiting for resolution/rejection");
+      var deferred = this;
+      var timeoutId = global.setTimeout(function() {
+        deferred.reject(rejection);
+      }, timeout);
+
+      Deferring.call(this, function(success) {
+        global.clearTimeout(timeoutId);
+        return success;
+      }, function(failure) {
+        global.clearTimeout(timeoutId);
+        throw failure;
+      });
+
+    } else {
+      throw new TypeError("Deferred constructor must be called with a non-negative number")
+    }
+  }
+
+  /* Prototype, constructor and name */
+  Deferred.prototype = Object.create(Deferring.prototype);
   Deferred.prototype.constructor = Deferred;
   Deferred.prototype.name = 'Deferred';
 
@@ -185,7 +218,6 @@
     var deferred = new Deferred();
 
     Object.defineProperties(this, {
-      '$$id': { enumerable: false, configurable: false, value: deferred.$$id },
 
       /**
        * Appends fulfillment and rejection handlers to this {@link Promise}, and
@@ -581,6 +613,9 @@
    | *======================================================================* |
    *==========================================================================*/
 
+  /* Promise implementation */
+  var Promise = global.Promise || PromiseImpl;
+
   /* Listeners (should contain only "define") */
   var listeners = { define: [] };
 
@@ -862,9 +897,6 @@
   function Esquire(timeout) {
     /* Proper construction */
     if (!(this instanceof Esquire)) return new Esquire(Promise);
-
-    /* Promise implementation */
-    var Promise = global.Promise || PromiseImpl;
 
     /* Timeout */
     if (timeout === undefined) {
