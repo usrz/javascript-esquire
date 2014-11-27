@@ -613,6 +613,9 @@
    | *======================================================================* |
    *==========================================================================*/
 
+  /* The global timeout */
+  var globalTimeout = 2000;
+
   /* Promise implementation */
   var Promise = global.Promise || PromiseImpl;
 
@@ -880,6 +883,8 @@
    * a timeout (in milliseconds) after which module resolution fails.
    *
    * @class Esquire
+   * @public
+   * @global
    * @classdesc
    * {@link Esquire.modules Modules} are _static_ and shared amongst
    * all {@link Esquire} instances (see [define(...)]{@link Esquire.define}),
@@ -900,7 +905,7 @@
 
     /* Timeout */
     if (timeout === undefined) {
-      timeout = 2000;
+      timeout = globalTimeout;
     } else {
       timeout = Number(timeout);
       if (timeout === NaN) {
@@ -947,23 +952,19 @@
       /* Clone dependency stack for errors */
       var cloneStack = dependencyStack.slice(0);
 
-      /* Create a deferred and *IMMEDIATELY* cache the promise */
-      var deferred = new Deferred();
+      /* Create an expiring Deferred... */
+      var timeoutMillis = timeout - (cloneStack.length * 5);
+      if (timeoutMillis < 50) timeoutMillis = 50;
+      var timeoutRejection = new EsquireError("Timeout reached waiting for module '" + module.name + "'", cloneStack);
+      var deferred = new Deferred(timeoutMillis, timeoutRejection);
+
+      /* ... and *IMMEDIATELY* cache the promise */
       if (module.name && (! module.$$dynamic)) {
         cache[module.name] = deferred.promise;
       }
 
-      /* Set a timeout, after which module construction will fail */
-      var timeoutMillis = timeout - (cloneStack.length * 5);
-      if (timeoutMillis < 50) timeoutMillis = 50;
-      var timeoutId = global.setTimeout(function() {
-        var error = new EsquireError("Timeout reached waiting for module '" + module.name + "'", cloneStack);
-        deferred.reject(error);
-      }, timeoutMillis);
-
       /* Clear timeouts and resolve */
       var resolveCallback = function(success) {
-        global.clearTimeout(timeoutId);
 
         /* Cache the resolved value */
         if (module.name && (! module.$$dynamic)) {
@@ -976,7 +977,6 @@
 
       /* Clear timeouts and reject */
       var rejectCallback  = function(failure) {
-        global.clearTimeout(timeoutId);
         deferred.reject(failure);
       };
 
@@ -1149,7 +1149,31 @@
     "resolve":     { enumerable: true,  configurable: false, value: resolve },
 
     /**
-     * An unmodifiable dictionary of all {@link Module}s known by
+     * The global timeout (in milliseconds) to wait for module definition
+     * and injection.
+     *
+     * Defaults to _2000 ms_ (2 seconds), can not be less than _100 ms_.
+     *
+     * @static
+     * @member {number} timeout
+     * @memberof Esquire
+     */
+    "timeout": { enumerable: true, configurable: false,
+      get: function() {
+        return globalTimeout;
+      },
+      set: function(timeout) {
+        timeout = Number(timeout);
+        if (timeout === NaN) {
+          throw new EsquireError("Timeout is not a number");
+        } else if (timeout < 100) {
+          throw new EsquireError("Timeout must be greater or equal than 100ms");
+        }
+      }
+    },
+
+    /**
+     * An unmodifiable dictionary of all {@link Module}s _currently_ known by
      * {@link Esquire}.
      *
      * @static
