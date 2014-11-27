@@ -630,6 +630,9 @@
     "$deferred": new InternalModule("$deferred")
   };
 
+  /* Deferred modules */
+  var deferredModules = {};
+
   /* Flatten an array, or array of array, for aguments */
   function flatten(iterable) {
     if (! iterable) return [];
@@ -794,6 +797,13 @@
       }
     }
 
+    /* Resolve our deferred if someone was waiting for this */
+    if (deferredModules[module.name]) {
+      deferredModules[module.name].resolve(module);
+      delete deferredModules[module.name];
+    }
+
+    /* Return our defined module */
     return module;
   };
 
