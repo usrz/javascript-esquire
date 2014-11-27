@@ -788,15 +788,23 @@
   /* Resolve direct dependencies for the specified module */
   function resolveDependencies(module, dependencyStack) {
 
-    /* Check parameters */
-    if (!dependencyStack) dependencyStack = [];
+    /* Check parameters and clone dependency stack */
     if (!module) throw new EsquireError("No module or module name specified");
+    if (!dependencyStack) dependencyStack = [];
+    dependencyStack = dependencyStack.slice(0);
+
+    /* Resolve the module from its name if we have to */
     if (typeof(module) === 'string') {
       if (modules[module]) {
         module = modules[module];
       } else {
         throw new NoModuleError(name);
       }
+    }
+
+    /* Check that what we got is actually a module */
+    if (!(module instanceof Module)) {
+      throw new EsquireError("Can only resolve module or module name");
     }
 
     /* Check recursion */
@@ -815,16 +823,10 @@
       var dependencyName = module.dependencies[i];
       var dependency = modules[dependencyName];
       if (dependency) {
+
         /* Add the dependency */
         moduleDependencies.push(dependency);
 
-        /* If transitive, recurse */
-        // if (transitive) {
-        //   var dependencies = resolve(dependency, dependencyStack);
-        //   for (var name in dependencies) {
-        //     moduleDependencies.push(dependencies[name]);
-        //   }
-        // }
       } else if (isGlobal(dependencyName)) {
 
         /* Global "any" dependency not in modules */
@@ -925,11 +927,8 @@
 
       }
 
-      /* Clone dependency stack for errors */
-      var cloneStack = dependencyStack.slice(0);
-
-      /* Create an expiring Deferred... */
-      var timeoutMillis = timeout - (cloneStack.length * 5);
+      /* Create an expiring Deferred, shortening the timeout */
+      var timeoutMillis = timeout - (dependencyStack.length * 5);
       if (timeoutMillis < 50) timeoutMillis = 50;
       var deferred = new Deferred(timeoutMillis, "Timeout waiting for module '" + module.name + "'");
 
