@@ -805,7 +805,7 @@
     }
 
     /* Not a module, not a string... Foo! */
-    throw new EsquireError("Unable to resolve module of type " + typeof(module));
+    return Promise.reject("Unable to resolve module of type " + typeof(module));
 
   }
 
@@ -813,8 +813,7 @@
   var emptyPromise =  Promise.resolve([]);
   function resolveDependencies(module) {
     if (!(module instanceof Module)) {
-      console.error("FAILED, NOT A MODULE", module);
-      throw new Error("NO");
+      return Promise.reject("Unable to resolve module of type " + typeof(module));
     }
 
     if (module.dependencies.length == 0) return emptyPromise;
@@ -829,6 +828,34 @@
     }
 
     return Promise.all(moduleDependencies);
+  }
+
+  /* Resolve ALL dependencies, transitively */
+  function resolveTransitiveDependencies(module, hash) {
+    if (!(module instanceof Module)) {
+      return Promise.reject("Unable to resolve module of type " + typeof(module));
+    }
+
+    var promises = [];
+    for (var i in module.dependencies) {
+      var dependencyName = module.dependencies[i];
+
+      /* Ignore already resolved dependencies */
+      if (hash[dependencyName]) continue;
+
+      /* Get a module or a promise to it and put it in the hash NOW! */
+      var dependency = hash[dependencyName] = moduleOrPromise(dependencyName);
+
+      /* Transitively resolve the dependency */
+      promises.push(Promise.resolve(dependency).then(function(dependency) {
+        hash[dependencyName] = dependency;
+        return resolveTransitiveDependencies(dependency, hash);
+      }));
+    }
+
+    return Promise.all(promises).then(function() {
+      return hash;
+    });
   }
 
 
@@ -1124,18 +1151,28 @@
      *                                 resolved. If `false` or _undefined_, only
      *                                 the {@link Module}'s explicit dependencies
      *                                 will be resolved.
-     * @returns {Module[]} An array of all required {@link Module}s.
+     * @returns {Object.<string,Module>} An dictionary of all required
+     *                                   {@link Module}s keyed by `name`.
      */
     "resolve": { enumerable: true, configurable: false, value: function(module, transitive) {
       if (typeof(module) === 'string') {
         return Promise.resolve(moduleOrPromise(module)).then(function(module) {
-          return resolveDependencies(module);
-        });
-      } else if (module instanceof Module) {
-        return resolveDependencies(module);
-      } else {
+          return Esquire.resolve(module, transitive);
+        })
+      } else if (!(module instanceof Module)) {
         throw new TypeError("Must be invoked with Module or module name");
       }
+
+      if (transitive) return resolveTransitiveDependencies(module, {});
+      else return resolveDependencies(module).then(function(dependencies) {
+        var hash = {};
+        for (var i in dependencies) {
+          hash[dependencies[i].name] = dependencies[i];
+        }
+        return hash;
+      });
+
+      return resolveTransitiveDependencies(module, {});
     }},
 
     /**

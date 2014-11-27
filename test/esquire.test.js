@@ -638,36 +638,99 @@
       promises('should resolve empty dependencies', function() {
         return Esquire.resolve('module-a')
           .then(function(dependencies) {
-            expect(dependencies).to.be.empty;
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(0);
           });
       });
 
       promises('should resolve valid dependencies', function() {
         return Esquire.resolve('module-c')
           .then(function(dependencies) {
-            expect(dependencies.length).to.equal(2);
-            expect(dependencies[0]).to.equal(Esquire.module('module-a'));
-            expect(dependencies[1]).to.equal(Esquire.module('module-b'));
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(2);
+            expect(dependencies['module-a']).to.equal(Esquire.module('module-a'));
+            expect(dependencies['module-b']).to.equal(Esquire.module('module-b'));
           });
       });
 
       promises('should resolve direct dependencies', function() {
         return Esquire.resolve('module-d')
           .then(function(dependencies) {
-            expect(dependencies.length).to.equal(1);
-            expect(dependencies[0]).to.equal(Esquire.module('module-c'));
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(1);
+            expect(dependencies['module-c']).to.equal(Esquire.module('module-c'));
           });
       });
 
-      xpromises('should resolve transitive dependencies', function() {
+      promises('should resolve transitive dependencies', function() {
         return Esquire.resolve('module-d', true)
           .then(function(dependencies) {
-            expect(dependencies.length).to.equal(3);
-            expect(dependencies[0]).to.equal(Esquire.module('module-c'));
-            expect(dependencies[1]).to.equal(Esquire.module('module-a'));
-            expect(dependencies[2]).to.equal(Esquire.module('module-b'));
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(3);
+            expect(dependencies['module-a']).to.equal(Esquire.module('module-a'));
+            expect(dependencies['module-b']).to.equal(Esquire.module('module-b'));
+            expect(dependencies['module-c']).to.equal(Esquire.module('module-c'));
           });
       });
+
+      promises('should resolve transitive deferred dependencies', function() {
+
+        var start = "test/deferred-" + (Math.floor(Math.random() * 1000000));
+        var name1 = "test/deferred-" + (Math.floor(Math.random() * 1000000));
+        var name2 = "test/deferred-" + (Math.floor(Math.random() * 1000000));
+        var name3 = "test/deferred-" + (Math.floor(Math.random() * 1000000));
+
+        Esquire.define(start, [name1], function() {});
+        setTimeout(function() { Esquire.define(name1, [name2], function() {}) }, 20);
+        setTimeout(function() { Esquire.define(name2, [name3], function() {}) }, 40);
+        setTimeout(function() { Esquire.define(name3, ["module-d"], function() {}) }, 60);
+
+        return Esquire.resolve(start, true)
+          .then(function(dependencies) {
+
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(7);
+
+            // check on module NAMES, not instances returned by Esquire.define()
+            // because we might potentially unlock all our chains (and have this
+            // call resolved) before the actual "Esquire.define" method returns.
+            expect(dependencies[name1].name).to.equal(name1);
+            expect(dependencies[name2].name).to.equal(name2);
+            expect(dependencies[name3].name).to.equal(name3);
+
+            // those ones on the other hand were not deferred, safe to check...
+            expect(dependencies['module-a']).to.equal(Esquire.module('module-a'));
+            expect(dependencies['module-b']).to.equal(Esquire.module('module-b'));
+            expect(dependencies['module-c']).to.equal(Esquire.module('module-c'));
+            expect(dependencies['module-d']).to.equal(Esquire.module('module-d'));
+          });
+      });
+
+
+      promises('should resolve circular dependencies', function() {
+        return Esquire.resolve('circular-a', true)
+          .then(function(dependencies) {
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(7);
+            expect(dependencies['circular-a']).to.equal(Esquire.module('circular-a'));
+            expect(dependencies['circular-b']).to.equal(Esquire.module('circular-b'));
+            expect(dependencies['circular-c']).to.equal(Esquire.module('circular-c'));
+            expect(dependencies['circular-d']).to.equal(Esquire.module('circular-d'));
+            expect(dependencies['circular-e']).to.equal(Esquire.module('circular-e'));
+            expect(dependencies['circular-f']).to.equal(Esquire.module('circular-f'));
+            expect(dependencies['circular-g']).to.equal(Esquire.module('circular-g'));
+          });
+      });
+
+      promises('should resolve circular dependencies to self', function() {
+        return Esquire.resolve('circular-self', true)
+          .then(function(dependencies) {
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(1);
+            expect(dependencies['circular-self']).to.equal(Esquire.module('circular-self'));
+          });
+      });
+
     });
 
     /* ======================================================================== */
