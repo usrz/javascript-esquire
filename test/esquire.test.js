@@ -635,14 +635,14 @@
         expect(modules['module-b']     ).to.equal(Esquire.module('module-b'));
       });
 
-      xpromises('should resolve empty dependencies', function() {
+      promises('should resolve empty dependencies', function() {
         return Esquire.resolve('module-a')
           .then(function(dependencies) {
             expect(dependencies).to.be.empty;
           });
       });
 
-      xpromises('should resolve valid dependencies', function() {
+      promises('should resolve valid dependencies', function() {
         return Esquire.resolve('module-c')
           .then(function(dependencies) {
             expect(dependencies.length).to.equal(2);
@@ -651,7 +651,7 @@
           });
       });
 
-      xpromises('should resolve direct dependencies', function() {
+      promises('should resolve direct dependencies', function() {
         return Esquire.resolve('module-d')
           .then(function(dependencies) {
             expect(dependencies.length).to.equal(1);
@@ -674,16 +674,40 @@
 
     describe('deferred definition', function() {
 
-      xpromises('should wait until modules are defined', function() {
+      promises('should wait until modules are defined and resolve', function() {
         var name = "test/deferred-" + (Math.floor(Math.random() * 1000000));
-        // setTimeout(function() {
+        setTimeout(function() {
           Esquire.define(name, [], function() { return "value for " + name });
-        // }, 50);
+        }, 50);
 
-        return new Esquire().inject(name, function(value) {
+        return new Esquire(100).inject(name, function(value) {
           expect(value).to.be.equal("value for " + name);
         });
       });
+
+      promises('should wait until modules are defined and reject', function() {
+
+        var name = "test/deferred-" + (Math.floor(Math.random() * 1000000));
+
+        setTimeout(function() {
+          Esquire.define(name, [], function() { throw new Error("Error " + name) });
+        }, 50);
+
+        var invoked = false;
+
+        return new Esquire(100).inject(name, function(value) {
+          invoked = true;
+        }).then(function(success) {
+          throw new Error("Should not succeed")
+        }, function (failure) {
+          expect(failure).to.be.instanceof(Error);
+          expect(failure.originalCause).to.be.instanceof(Error);
+          expect(failure.originalCause.message).to.equal("Error " + name);
+          expect(invoked).to.be.false;
+        })
+
+      });
+
     });
 
     /* ======================================================================== */
@@ -692,13 +716,18 @@
 
       promises('should fail injecting an unknown module', function() {
 
+        var timeout = Esquire.timeout;
+        Esquire.timeout = 100;
+
         var invoked = false;
 
         return new Esquire().inject(["not-known"], function() {
           invoked = true;
         }).then(function(success) {
+          Esquire.timeout = timeout;
           throw new Error("Should not succeed")
         }, function (failure) {
+          Esquire.timeout = timeout;
           expect(failure).to.be.instanceof(Error);
           expect(failure.message).to.match(/module 'not-known' not found/i);
           expect(invoked).to.be.false;
@@ -720,24 +749,38 @@
 
       promises('should fail on circular dependencies', function() {
 
-        return new Esquire().require("circular-a")
+        var name = "testCircular-" + Math.floor(Math.random() * 1000000);
+        Esquire.define(name, "circular-a", function() {
+          throw new Error("NEVER");
+        });
+
+        return new Esquire().require(name)
         .then(function(success) {
           throw new Error("Should not succeed")
         }, function (failure) {
           expect(failure).to.be.instanceof(Error);
-          expect(failure.message).to.match(/module 'circular-a' has circular dependencies/i);
+          expect(failure.message).to.match(/^Esquire: Injection failed/);
+          expect(failure.originalCause).to.be.instanceof(Error);
+          expect(failure.originalCause.message).to.equal("Esquire: Detected circular dependency in circular-a -> circular-b -> circular-c -> circular-d -> circular-e -> circular-f -> circular-g -> circular-a");
         })
 
       });
 
       promises('should fail on self dependencies', function() {
 
-        return new Esquire().require("circular-self")
+        var name = "testCircular-" + Math.floor(Math.random() * 1000000);
+        Esquire.define(name, "circular-self", function() {
+          throw new Error("NEVER");
+        });
+
+        return new Esquire().require(name)
         .then(function(success) {
           throw new Error("Should not succeed")
         }, function (failure) {
           expect(failure).to.be.instanceof(Error);
-          expect(failure.message).to.match(/module 'circular-self' has circular dependencies/i);
+          expect(failure.message).to.match(/^Esquire: Injection failed/);
+          expect(failure.originalCause).to.be.instanceof(Error);
+          expect(failure.originalCause.message).to.equal("Esquire: Detected circular dependency in circular-self -> circular-self");
         })
 
       });

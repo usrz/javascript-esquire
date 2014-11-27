@@ -475,8 +475,12 @@
   };
 
    /* When circular dependencies are detected */
-  function CircularDependencyError(name, dependencyStack) {
-    EsquireError.call(this, "Module '" + name + "' has circular dependencies", dependencyStack);
+  function CircularDependencyError(dependencies) {
+    var message = "Detected circular dependency in ";
+    for (var i in dependencies) message += dependencies[i] + " -> ";
+    message += dependencies[0];
+    this.$$message = message;
+    EsquireError.call(this, message);
   };
 
   EsquireError.prototype = Object.create(Error.prototype);
@@ -785,66 +789,46 @@
     return module;
   };
 
-  /* Resolve direct dependencies for the specified module */
-  function resolveDependencies(module, dependencyStack) {
+  /* Return a module (if known) or a promise to get it */
+  function moduleOrPromise(module) {
+    if (module instanceof Module) return module;
 
-    /* Check parameters and clone dependency stack */
-    if (!module) throw new EsquireError("No module or module name specified");
-    if (!dependencyStack) dependencyStack = [];
-    dependencyStack = dependencyStack.slice(0);
-
-    /* Resolve the module from its name if we have to */
     if (typeof(module) === 'string') {
-      if (modules[module]) {
-        module = modules[module];
-      } else {
-        throw new NoModuleError(name);
-      }
+      if (modules[module]) return modules[module];
+      if (deferredModules[module]) return deferredModules[module].promise;
+      if (isGlobal(module)) return modules[module] = new GlobalModule(module);
+
+      /* Half timeout, so this will take precedence on "create(...)" */
+      var deferred = new Deferred(globalTimeout / 2, new NoModuleError(module));
+      deferredModules[module] = deferred;
+      return deferred.promise;
     }
 
-    /* Check that what we got is actually a module */
+    /* Not a module, not a string... Foo! */
+    throw new EsquireError("Unable to resolve module of type " + typeof(module));
+
+  }
+
+  /* Resolve direct dependencies for the specified module */
+  var emptyPromise =  Promise.resolve([]);
+  function resolveDependencies(module) {
     if (!(module instanceof Module)) {
-      throw new EsquireError("Can only resolve module or module name");
+      console.error("FAILED, NOT A MODULE", module);
+      throw new Error("NO");
     }
 
-    /* Check recursion */
-    if (dependencyStack.indexOf(module.name) >= 0) {
-      throw new CircularDependencyError(module.name, dependencyStack);
-    }
+    if (module.dependencies.length == 0) return emptyPromise;
 
     /* The dependencies to return */
     var moduleDependencies = [];
 
     /* Recurse into module */
-    dependencyStack.push(module.name);
     for (var i in module.dependencies) {
-
-      /* Check this module's dependency */
       var dependencyName = module.dependencies[i];
-      var dependency = modules[dependencyName];
-      if (dependency) {
-
-        /* Add the dependency */
-        moduleDependencies.push(dependency);
-
-      } else if (isGlobal(dependencyName)) {
-
-        /* Global "any" dependency not in modules */
-        moduleDependencies.push(new GlobalModule(dependencyName));
-
-      } else {
-
-        /* Dependency not found */
-        throw new NoModuleError(module.dependencies[i]);
-      }
+      moduleDependencies.push(moduleOrPromise(dependencyName));
     }
 
-    /* Pop ourselves out */
-    dependencyStack.pop();
-
-    /* Return our resolved module dependencies */
-    return moduleDependencies;
-
+    return Promise.all(moduleDependencies);
   }
 
 
@@ -878,6 +862,7 @@
    *                           minimum 100 ms, defaults to 2000 ms.
    */
   function Esquire(timeout) {
+
     /* Proper construction */
     if (!(this instanceof Esquire)) return new Esquire(Promise);
 
@@ -902,71 +887,59 @@
     };
 
     /* Create a new instance from a defined module */
-    function create(module, dependencyStack) {
+    function create(module, timeout, dependencyStack) {
+      dependencyStack = dependencyStack.slice(0);
+      if (module.name != null) dependencyStack.push(module.name);
 
       /* Already in cache? Why even bother? */
       if (cache[module.name]) return cache[module.name];
 
-      /* Calculate the module's direct dependencies */
-      var dependencies = resolveDependencies(module, dependencyStack);
-      var parameters = [];
-
-      for (var i in dependencies) {
-        var dependency = dependencies[i];
-
-        /* Already in cache? Just push it! */
-        if (cache[dependency.name]) {
-          parameters.push(cache[dependency.name]);
-        } else {
-
-          /* Not in cache, create (recursively) the dependency */
-          dependencyStack.push(module.name);
-          parameters.push(create(dependency, dependencyStack));
-          dependencyStack.pop();
-        }
-
-      }
-
       /* Create an expiring Deferred, shortening the timeout */
-      var timeoutMillis = timeout - (dependencyStack.length * 5);
-      if (timeoutMillis < 50) timeoutMillis = 50;
-      var deferred = new Deferred(timeoutMillis, "Timeout waiting for module '" + module.name + "'");
+      if (timeout < 50) timeout = 50;
+      var deferred = new Deferred(timeout, "Timeout waiting for module '" + module.name + "'");
 
       /* ... and *IMMEDIATELY* cache the promise */
       if (module.name && (! module.$$dynamic)) {
         cache[module.name] = deferred.promise;
       }
 
-      /* Cache module instance and resolve */
-      var resolveCallback = function(success) {
-        if (module.name && (! module.$$dynamic)) {
-          cache[module.name] = success;
-        }
-        deferred.resolve(success);
-      };
+      /* Calculate the module's direct dependencies */
+      resolveDependencies(module).then(function(dependencies) {
+        var parameters = [];
 
-      /* Reject with proper cause */
-      var rejectCallback = function(failure) {
-        deferred.reject(new InjectionError(module.name, failure));
-      };
+        /* Prepare parameters, either from cache or new creations */
+        for (var i in dependencies) {
+          var dependency = dependencies[i];
 
-      /* When all parameters have been resolved... */
-      Promise.all(parameters).then(function(success) {
-        try {
-          Promise.resolve(module.constructor.apply(module, success))
-            .then(function(success) {
-              resolveCallback(success);
-            }, function(failure) {
-              rejectCallback(failure);
-            });
-        } catch (error) {
-          rejectCallback(error);
+          /* Check for circular dependencies */
+          var circularIndex = dependencyStack.indexOf(dependency.name);
+          if (circularIndex >= 0) {
+            var circularDependencies = dependencyStack.slice(circularIndex);
+            throw new CircularDependencyError(circularDependencies);
+          }
+
+          if (cache[dependency.name]) {
+            parameters.push(cache[dependency.name]);
+          } else {
+            parameters.push(create(dependency, timeout - 5, dependencyStack));
+          }
         }
+
+        /* When all parameters have been resolved... */
+        return Promise.all(parameters).then(function(parameters) {
+          return module.constructor.apply(module, parameters);
+        });
+      })
+
+      /* Cache and resolve, or reject */
+      .then(function(created) {
+        if (module.name && (! module.$$dynamic)) cache[module.name] = created;
+        deferred.resolve(created);
       }, function(failure) {
-        rejectCallback(failure);
+        deferred.reject(new InjectionError(module.name, failure));
       });
 
-      /* Return the promise */
+      /* Return the deferred promise */
       return deferred.promise;
 
     }
@@ -1079,7 +1052,7 @@
       /* Create a fake "null" module and return its value */
       var module = new Module(null, args.arguments, args.function);
       try {
-        return create(module, []);
+        return create(module, timeout, []);
       } catch (error) {
         return Promise.reject(error);
       }
@@ -1138,7 +1111,7 @@
      *                                 requiring this module as a dependency.
      * @returns {Module} The new {@link Module} created by this call.
      */
-    "define":      { enumerable: true,  configurable: false, value: defineModule },
+    "define": { enumerable: true, configurable: false, value: defineModule },
 
     /**
      * Return an array of {@link Module} dependencies for a {@link Module}.
@@ -1153,8 +1126,16 @@
      *                                 will be resolved.
      * @returns {Module[]} An array of all required {@link Module}s.
      */
-    "resolve":     { enumerable: true,  configurable: false, value: function(name, transitive) {
-      return resolveDependencies(name);
+    "resolve": { enumerable: true, configurable: false, value: function(module, transitive) {
+      if (typeof(module) === 'string') {
+        return Promise.resolve(moduleOrPromise(module)).then(function(module) {
+          return resolveDependencies(module);
+        });
+      } else if (module instanceof Module) {
+        return resolveDependencies(module);
+      } else {
+        throw new TypeError("Must be invoked with Module or module name");
+      }
     }},
 
     /**
@@ -1177,6 +1158,8 @@
           throw new EsquireError("Timeout is not a number");
         } else if (timeout < 100) {
           throw new EsquireError("Timeout must be greater or equal than 100ms");
+        } else {
+          globalTimeout = timeout;
         }
       }
     },
