@@ -189,6 +189,17 @@
 
       });
 
+      promises('should eventually inject a module returning a promise', function() {
+
+        return new Esquire().require("module-g")
+        .then(function(success) {
+          expect(success).to.equal("value-g");
+        })
+
+      });
+
+      /* ==================================================================== */
+
       promises('should fail on construction error', function() {
 
         return new Esquire().require("module-e")
@@ -196,28 +207,23 @@
           throw new Error("Should not succeed")
         }, function(error) {
           expect(error).to.be.instanceof(Error);
-          expect(error.message).to.be.equal('Esquire: Module \'module-e\' failed to initialize [Cause: This module always fails]');
+          expect(error.message).to.be.equal("Esquire: Injection failed\n- Cause: Error instantiating 'module-e' module\n- Cause: This module always fails");
+          expect(error.originalCause).to.be.instanceof(Error);
+          expect(error.originalCause.message).to.be.equal('This module always fails');
         })
 
       });
 
-      promises('should fail on depending on failing module', function() {
+      promises('should fail depending on failing module', function() {
 
         return new Esquire().require("module-f")
         .then(function(success) {
           throw new Error("Should not succeed")
         }, function(error) {
           expect(error).to.be.instanceof(Error);
-          expect(error.message).to.be.equal('Esquire: Module \'module-e\' failed to initialize resolving -> module-f [Cause: This module always fails]');
-        })
-
-      });
-
-      promises('should eventually inject a module returning a promise', function() {
-
-        return new Esquire().require("module-g")
-        .then(function(success) {
-          expect(success).to.equal("value-g");
+          expect(error.message).to.be.equal("Esquire: Injection failed\n- Cause: Error instantiating 'module-f' module\n- Cause: Error instantiating 'module-e' module\n- Cause: This module always fails");
+          expect(error.originalCause).to.be.instanceof(Error);
+          expect(error.originalCause.message).to.be.equal('This module always fails');
         })
 
       });
@@ -229,12 +235,28 @@
           throw new Error("Should not succeed")
         }, function(error) {
           expect(error).to.be.instanceof(Error);
-          expect(error.message).to.be.equal('Esquire: Module \'module-h\' failed to initialize [Cause: value-h]');
-          expect(error.cause).to.be.instanceof(Error);
-          expect(error.cause.message).to.be.equal('value-h');
+          expect(error.message).to.be.equal("Esquire: Injection failed\n- Cause: Error instantiating 'module-h' module\n- Cause: value-h");
+          expect(error.originalCause).to.be.instanceof(Error);
+          expect(error.originalCause.message).to.be.equal('value-h');
         })
 
       });
+
+      promises('should time out waiting injection', function() {
+
+        return new Esquire(100).require("module-i")
+        .then(function(success) {
+          throw new Error("Should not succeed");
+        }, function(error) {
+          expect(error).to.be.instanceof(Error);
+          expect(error.message).to.be.equal("Esquire: Injection failed\n- Cause: Timeout waiting for module 'module-i'");
+          expect(error.originalCause).to.be.instanceof(Error);
+          expect(error.originalCause.message).to.be.equal("Timeout waiting for module 'module-i'");
+        })
+
+      });
+
+      /* ==================================================================== */
 
       promises('should expose a $global module', function() {
 
@@ -252,18 +274,6 @@
         .then(function(e2) {
           expect(e1).to.be.equal(e2);
           expect(e1 === e2).to.be.true;
-        })
-
-      });
-
-      promises('should time out waiting injection', function() {
-
-        return new Esquire(100).require("module-i")
-        .then(function(success) {
-          throw new Error("Should not succeed");
-        }, function(error) {
-          expect(error).to.be.instanceof(Error);
-          expect(error.message).to.be.equal('Esquire: Timeout reached waiting for module \'module-i\'');
         })
 
       });
@@ -412,12 +422,17 @@
       promises('should define with only name and function', function() {
         var name = moduleName();
 
-        Esquire.define(name, function() {
+        var module = Esquire.define(name, function() {
           expect(arguments.length).to.be.equal(0);
           return "module " + name;
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal([]);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.equal("return module " + name);
@@ -428,11 +443,16 @@
       promises('should define with name, string dependency and function', function() {
         var name = moduleName();
 
-        Esquire.define(name, "module-a", function(a) {
+        var module = Esquire.define(name, "module-a", function(a) {
           return "module " + name + ":" + a;
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal(['module-a']);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.equal("return module " + name + ":valueForModuleA");
@@ -443,11 +463,16 @@
       promises('should define with name, dependencies array and function', function() {
         var name = moduleName();
 
-        Esquire.define(name, ["module-a", "module-b"], function(a, b) {
+        var module = Esquire.define(name, ["module-a", "module-b"], function(a, b) {
           return "module " + name + ":" + a + "/" + b;
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal(['module-a', 'module-b']);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
@@ -458,11 +483,16 @@
       promises('should define with AngularJS arguments', function() {
         var name = moduleName();
 
-        Esquire.define(name, ["module-a", "module-b", function(a, b) {
+        var module = Esquire.define(name, ["module-a", "module-b", function(a, b) {
           return "module " + name + ":" + a + "/" + b;
         }]);
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal(['module-a', 'module-b']);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
@@ -475,7 +505,7 @@
       promises('should define with an object and undefined dependencies', function() {
         var name = moduleName();
 
-        Esquire.define({
+        var module = Esquire.define({
           name: name,
           constructor: function() {
             expect(arguments.length).to.be.equal(0);
@@ -484,6 +514,11 @@
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal([]);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.equal("return module " + name);
@@ -494,7 +529,7 @@
       promises('should define with an object and empty dependencies', function() {
         var name = moduleName();
 
-        Esquire.define({
+        var module = Esquire.define({
           name: name,
           dependencies: [],
           constructor: function() {
@@ -504,6 +539,11 @@
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal([]);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.equal("return module " + name);
@@ -514,7 +554,7 @@
       promises('should define with an object and single string dependency', function() {
         var name = moduleName();
 
-        Esquire.define({
+        var module = Esquire.define({
           name: name,
           dependencies: 'module-a',
           constructor: function(a) {
@@ -524,6 +564,11 @@
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal(['module-a']);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.equal("return module " + name + ":valueForModuleA");
@@ -534,7 +579,7 @@
       promises('should define with an object and a dependencies array', function() {
         var name = moduleName();
 
-        Esquire.define({
+        var module = Esquire.define({
           name: name,
           dependencies: ['module-a', 'module-b'],
           constructor: function(a, b) {
@@ -544,6 +589,11 @@
         });
 
         return esquire(name, function(dependency) {
+          expect(module).to.be.a('object');
+          expect(module.name).to.be.equal(name);
+          expect(module.dependencies).to.be.deep.equal(['module-a', 'module-b']);
+          expect(module.constructor).to.be.a('function');
+
           return "return " + dependency;
         }).then(function(result) {
           expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
@@ -585,32 +635,55 @@
         expect(modules['module-b']     ).to.equal(Esquire.module('module-b'));
       });
 
-      it('should resolve empty dependencies', function() {
-        var dependencies = Esquire.resolve('module-a');
-        expect(dependencies).to.be.empty;
+      xpromises('should resolve empty dependencies', function() {
+        return Esquire.resolve('module-a')
+          .then(function(dependencies) {
+            expect(dependencies).to.be.empty;
+          });
       });
 
-      it('should resolve valid dependencies', function() {
-        var dependencies = Esquire.resolve('module-c');
-        expect(dependencies.length).to.equal(2);
-        expect(dependencies[0]).to.equal(Esquire.module('module-a'));
-        expect(dependencies[1]).to.equal(Esquire.module('module-b'));
+      xpromises('should resolve valid dependencies', function() {
+        return Esquire.resolve('module-c')
+          .then(function(dependencies) {
+            expect(dependencies.length).to.equal(2);
+            expect(dependencies[0]).to.equal(Esquire.module('module-a'));
+            expect(dependencies[1]).to.equal(Esquire.module('module-b'));
+          });
       });
 
-      it('should resolve direct dependencies', function() {
-        var dependencies = Esquire.resolve('module-d');
-        expect(dependencies.length).to.equal(1);
-        expect(dependencies[0]).to.equal(Esquire.module('module-c'));
+      xpromises('should resolve direct dependencies', function() {
+        return Esquire.resolve('module-d')
+          .then(function(dependencies) {
+            expect(dependencies.length).to.equal(1);
+            expect(dependencies[0]).to.equal(Esquire.module('module-c'));
+          });
       });
 
-      it('should resolve transitive dependencies', function() {
-        var dependencies = Esquire.resolve('module-d', true);
-        expect(dependencies.length).to.equal(3);
-        expect(dependencies[0]).to.equal(Esquire.module('module-c'));
-        expect(dependencies[1]).to.equal(Esquire.module('module-a'));
-        expect(dependencies[2]).to.equal(Esquire.module('module-b'));
+      xpromises('should resolve transitive dependencies', function() {
+        return Esquire.resolve('module-d', true)
+          .then(function(dependencies) {
+            expect(dependencies.length).to.equal(3);
+            expect(dependencies[0]).to.equal(Esquire.module('module-c'));
+            expect(dependencies[1]).to.equal(Esquire.module('module-a'));
+            expect(dependencies[2]).to.equal(Esquire.module('module-b'));
+          });
       });
+    });
 
+    /* ======================================================================== */
+
+    describe('deferred definition', function() {
+
+      xpromises('should wait until modules are defined', function() {
+        var name = "test/deferred-" + (Math.floor(Math.random() * 1000000));
+        // setTimeout(function() {
+          Esquire.define(name, [], function() { return "value for " + name });
+        // }, 50);
+
+        return new Esquire().inject(name, function(value) {
+          expect(value).to.be.equal("value for " + name);
+        });
+      });
     });
 
     /* ======================================================================== */

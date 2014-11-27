@@ -175,10 +175,10 @@
 
         /* ==================================================================== */
 
-        promises("should timeout with a specific rejection", function(done) {
+        promises("should timeout with a rejection message", function(done) {
 
-          // empty string, not null but also not truthy...
-          var deferred = new Deferred(10, "");
+          // 0, not null but also not truthy...
+          var deferred = new Deferred(10, "Fail, deferred, FAIL!");
 
           setTimeout(function() {
             deferred.resolve("this is bad...");
@@ -187,8 +187,28 @@
           return deferred.promise.then(wrap(done, function(result) {
             throw new Error("Should not resolve");
           }), function(failure) {
-            expect(failure).to.be.a('string');
-            expect(failure).to.be.equal('');
+            expect(failure).to.be.instanceof(Error);
+            expect(failure.message).to.be.equal('Fail, deferred, FAIL!');
+          })
+
+        });
+
+        /* ==================================================================== */
+
+        promises("should timeout with a specific rejection", function(done) {
+
+          // 0, not null but also not truthy...
+          var deferred = new Deferred(10, 0);
+
+          setTimeout(function() {
+            deferred.resolve("this is bad...");
+          }, 20)
+
+          return deferred.promise.then(wrap(done, function(result) {
+            throw new Error("Should not resolve");
+          }), function(failure) {
+            expect(failure).to.be.a('number');
+            expect(failure).to.be.equal(0);
           })
 
         });

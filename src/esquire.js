@@ -134,8 +134,11 @@
    *                           {@link Deferred} will be automatically rejected.
    *                           This must be a number greater or equal to zero.
    * @param {*} [rejection] The reason with which this {@link Deferred} will be
-   *                        automatically rejected after the specified `timeout`.
-   *                        If `null` a generic {@link Error} will be used.
+   *                        automatically rejected after the `timeout`. If this
+   *                        parameter is a `string` then it will be used to
+   *                        construct an {@link Error} using the string as its
+   *                        message. If the parameter is `null` or `undefined`
+   *                        a generic {@link Error} will be used.
    * @class module:$deferred.Deferred
    * @example -
    * Esquire.define("myModule", ['$deferred'], function(Deferred) {
@@ -154,6 +157,8 @@
 
     } else if ((typeof(timeout) === 'number') && (timeout >= 0)) {
       if (rejection == null) rejection = new Error("Timeout waiting for resolution/rejection");
+      else if (typeof(rejection) === 'string') rejection = new Error(rejection);
+
       var deferred = this;
       var timeoutId = global.setTimeout(function() {
         deferred.reject(rejection);
@@ -451,17 +456,22 @@
   }
 
    /* When modules are not found */
-  function NoModuleError(name, dependencyStack) {
-    EsquireError.call(this, "Module '" + name + "' not found", dependencyStack);
+  function NoModuleError(name) {
+    EsquireError.call(this, "Module '" + name + "' not found");
   };
 
    /* When circular dependencies are detected */
-  function ModuleConstructorError(name, cause, dependencyStack) {
-    EsquireError.call(this, "Module '" + name + "' failed to initialize", dependencyStack);
+  function InjectionError(name, cause) {
+    var message = name ? "Error instantiating '" + name + "' module" : "Injection failed";
+    this.$$message = message;
     if (cause) {
-      this.message = this.message + " [Cause: " + (cause.message ? cause.message : "[no message]") + "]";
+      this.originalCause = cause.originalCause || cause;
       this.cause = cause;
     }
+    for (var error = cause; error != null; error = error.cause) {
+      message += "\n- Cause: " + (error.$$message || error.message || "[no message]");
+    }
+    EsquireError.call(this, message);
   };
 
    /* When circular dependencies are detected */
@@ -477,9 +487,9 @@
   NoModuleError.prototype.constructor = NoModuleError;
   NoModuleError.prototype.name = 'NoModuleError';
 
-  ModuleConstructorError.prototype = Object.create(EsquireError.prototype);
-  ModuleConstructorError.prototype.constructor = ModuleConstructorError;
-  ModuleConstructorError.prototype.name = 'ModuleConstructorError';
+  InjectionError.prototype = Object.create(EsquireError.prototype);
+  InjectionError.prototype.constructor = InjectionError;
+  InjectionError.prototype.name = 'InjectionError';
 
   CircularDependencyError.prototype = Object.create(EsquireError.prototype);
   CircularDependencyError.prototype.constructor = CircularDependencyError;
@@ -711,49 +721,17 @@
   /* Methods below will be public                                             */
   /* ======================================================================== */
 
-  /**
-   * Define a {@link Module} as available to Esquire
-   *
-   * @function Esquire.define
-   * @example -
-   * Esquire.define('foo', ['modA', 'depB'], function(a, b) {
-   *   // 'a' will be an instance of 'modA'
-   *   // 'b' will be an instance of 'depB'
-   *   function Foo(aInstance, bInstance) {
-   *     // ...
-   *   };
-   *   return new Foo(a, b);
-   * });
-   *
-   * @example Definition with a {@link Module}-like object also works.
-   * Esquire.define({
-   *   name: 'foo',
-   *   dependencies: ['modA', 'depB'],
-   *   constructor: function(a, b) {
-   *     // ...
-   *   }
-   * });
-   *
-   * @param {string}   name - The name of the module to define.
-   * @param {string[]} [dependencies] - An array of required module names whose
-   *                                    instances will be passed to the
-   *                                    `constructor(...)` method.
-   * @param {function} constructor - A function that will be invoked once per
-   *                                 each {@link Esquire} instance. Its return
-   *                                 value will be injected in any other module
-   *                                 requiring this module as a dependency.
-   * @returns {Module} The new {@link Module} created by this call.
-   */
-  function define() {
+  /* Module definition */
+  function defineModule() {
 
     /* Object based definition */
     if ((arguments.length == 1)
       && arguments[0].name
       && arguments[0].constructor) {
         var module = arguments[0];
-        return define(module.name,
-                      module.dependencies || [], //optional
-                      module.constructor);
+        return defineModule(module.name,
+                            module.dependencies || [], //optional
+                            module.constructor);
     }
 
     /* Normal arguments-based definition */
@@ -807,20 +785,8 @@
     return module;
   };
 
-  /**
-   * Return an array of {@link Module} dependencies for a {@link Module}.
-   *
-   * @function Esquire.resolve
-   * @param {string|Module} module - The {@link Module} (or its name) for which
-   *                                 dependendencies should be resolved.
-   * @param {boolean} [transitive] - If `true` all direct and indirect
-   *                                 _(transitive)_ dependencies will be
-   *                                 resolved. If `false` or _undefined_, only
-   *                                 the {@link Module}'s explicit dependencies
-   *                                 will be resolved.
-   * @returns {Module[]} An array of all required {@link Module}s.
-   */
-  function resolve(module, transitive, dependencyStack) {
+  /* Resolve direct dependencies for the specified module */
+  function resolveDependencies(module, dependencyStack) {
 
     /* Check parameters */
     if (!dependencyStack) dependencyStack = [];
@@ -829,7 +795,7 @@
       if (modules[module]) {
         module = modules[module];
       } else {
-        throw new NoModuleError(name, dependencyStack);
+        throw new NoModuleError(name);
       }
     }
 
@@ -853,12 +819,12 @@
         moduleDependencies.push(dependency);
 
         /* If transitive, recurse */
-        if (transitive) {
-          var dependencies = resolve(dependency, dependencyStack);
-          for (var name in dependencies) {
-            moduleDependencies.push(dependencies[name]);
-          }
-        }
+        // if (transitive) {
+        //   var dependencies = resolve(dependency, dependencyStack);
+        //   for (var name in dependencies) {
+        //     moduleDependencies.push(dependencies[name]);
+        //   }
+        // }
       } else if (isGlobal(dependencyName)) {
 
         /* Global "any" dependency not in modules */
@@ -867,7 +833,7 @@
       } else {
 
         /* Dependency not found */
-        throw new NoModuleError(module.dependencies[i], dependencyStack);
+        throw new NoModuleError(module.dependencies[i]);
       }
     }
 
@@ -940,7 +906,7 @@
       if (cache[module.name]) return cache[module.name];
 
       /* Calculate the module's direct dependencies */
-      var dependencies = resolve(module, false, dependencyStack);
+      var dependencies = resolveDependencies(module, dependencyStack);
       var parameters = [];
 
       for (var i in dependencies) {
@@ -965,55 +931,41 @@
       /* Create an expiring Deferred... */
       var timeoutMillis = timeout - (cloneStack.length * 5);
       if (timeoutMillis < 50) timeoutMillis = 50;
-      var timeoutRejection = new EsquireError("Timeout reached waiting for module '" + module.name + "'", cloneStack);
-      var deferred = new Deferred(timeoutMillis, timeoutRejection);
+      var deferred = new Deferred(timeoutMillis, "Timeout waiting for module '" + module.name + "'");
 
       /* ... and *IMMEDIATELY* cache the promise */
       if (module.name && (! module.$$dynamic)) {
         cache[module.name] = deferred.promise;
       }
 
-      /* Clear timeouts and resolve */
+      /* Cache module instance and resolve */
       var resolveCallback = function(success) {
-
-        /* Cache the resolved value */
         if (module.name && (! module.$$dynamic)) {
           cache[module.name] = success;
         }
-
-        /* Resolve the deferred */
         deferred.resolve(success);
       };
 
-      /* Clear timeouts and reject */
-      var rejectCallback  = function(failure) {
-        deferred.reject(failure);
+      /* Reject with proper cause */
+      var rejectCallback = function(failure) {
+        deferred.reject(new InjectionError(module.name, failure));
       };
 
       /* When all parameters have been resolved... */
-      Promise.all(parameters).then(
-        function(success) {
-          try {
-            /* ... then call the constructor */
-            var result = module.constructor.apply(module, success);
-            if (result && (typeof(result.then) === 'function')) {
-              result.then(resolveCallback, function(failure) {
-                var error = new ModuleConstructorError(module.name, failure, cloneStack);
-                rejectCallback(error);
-              });
-            } else {
-              resolveCallback(result);
-            }
-
-          } catch (error) {
-            /* Errors from invoking the constructor head down here */
-            rejectCallback(new ModuleConstructorError(module.name, error, cloneStack));
-          }
-
-        }, function(failure) {
-          rejectCallback(failure);
+      Promise.all(parameters).then(function(success) {
+        try {
+          Promise.resolve(module.constructor.apply(module, success))
+            .then(function(success) {
+              resolveCallback(success);
+            }, function(failure) {
+              rejectCallback(failure);
+            });
+        } catch (error) {
+          rejectCallback(error);
         }
-      );
+      }, function(failure) {
+        rejectCallback(failure);
+      });
 
       /* Return the promise */
       return deferred.promise;
@@ -1154,9 +1106,57 @@
     "$$Promise":   { enumerable: false, configurable: false, value: PromiseImpl },
     "$$Deferred":  { enumerable: false, configurable: false, value: Deferred },
 
-    /* Public methods from above */
-    "define":      { enumerable: true,  configurable: false, value: define },
-    "resolve":     { enumerable: true,  configurable: false, value: resolve },
+    /**
+     * Define a {@link Module} as available to Esquire
+     *
+     * @function Esquire.define
+     * @example -
+     * Esquire.define('foo', ['modA', 'depB'], function(a, b) {
+     *   // 'a' will be an instance of 'modA'
+     *   // 'b' will be an instance of 'depB'
+     *   function Foo(aInstance, bInstance) {
+     *     // ...
+     *   };
+     *   return new Foo(a, b);
+     * });
+     *
+     * @example Definition with a {@link Module}-like object also works.
+     * Esquire.define({
+     *   name: 'foo',
+     *   dependencies: ['modA', 'depB'],
+     *   constructor: function(a, b) {
+     *     // ...
+     *   }
+     * });
+     *
+     * @param {string}   name - The name of the module to define.
+     * @param {string[]} [dependencies] - An array of required module names
+     *                                    whose instances will be passed to the
+     *                                    `constructor(...)` method.
+     * @param {function} constructor - A function that will be invoked once per
+     *                                 each {@link Esquire} instance. Its return
+     *                                 value will be injected in any other module
+     *                                 requiring this module as a dependency.
+     * @returns {Module} The new {@link Module} created by this call.
+     */
+    "define":      { enumerable: true,  configurable: false, value: defineModule },
+
+    /**
+     * Return an array of {@link Module} dependencies for a {@link Module}.
+     *
+     * @function Esquire.resolve
+     * @param {string|Module} module - The {@link Module} (or its name) for which
+     *                                 dependendencies should be resolved.
+     * @param {boolean} [transitive] - If `true` all direct and indirect
+     *                                 _(transitive)_ dependencies will be
+     *                                 resolved. If `false` or _undefined_, only
+     *                                 the {@link Module}'s explicit dependencies
+     *                                 will be resolved.
+     * @returns {Module[]} An array of all required {@link Module}s.
+     */
+    "resolve":     { enumerable: true,  configurable: false, value: function(name, transitive) {
+      return resolveDependencies(name);
+    }},
 
     /**
      * The global timeout (in milliseconds) to wait for module definition
