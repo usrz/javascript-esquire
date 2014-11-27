@@ -71,6 +71,9 @@
    * Load an external script and return a _then-able_
    * [`Promise`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise).
    *
+   * **NOTE**: This document refers to the _browser_ based implementation, under
+   * _Node.JS_ this method works slightly differently.
+   *
    * @static
    * @function load
    * @memberof Esquire

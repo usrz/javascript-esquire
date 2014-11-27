@@ -96,11 +96,8 @@
 
     it('should correctly normalize dependency names', function() {
 
-      Esquire.define("$global.forDependency1", ["$global.foo"], function() {});
-      Esquire.define("$global/forDependency2", ["$global/bar"], function() {});
-
-      var m1 = Esquire.module("$global/forDependency1");
-      var m2 = Esquire.module("$global.forDependency2");
+      var m1 = Esquire.define("$global.forDependency1", ["$global.foo"], function() {});
+      var m2 = Esquire.define("$global/forDependency2", ["$global/bar"], function() {});
 
       expect(m1.name).to.equal("$global/forDependency1");
       expect(m2.name).to.equal("$global/forDependency2");
@@ -156,17 +153,24 @@
 
     promises('should provide a reinjectable global module', function() {
 
-      var script = Esquire.module("$global.console").$$script
-                         .replace("$global/console",
-                                  "xinject-console");
-      eval(script);
-
-      var c0 = new Esquire().require("xinject-console");
-      var c1 = esquire("$global.console");
-
-      return Promise.all([c0, c1]).then(function(c) {
-        expect(c[0]).to.equal(c[1]);
+      return Esquire.module("$global.console")
+      .then(function(module) {
+        return module.$$script.replace("$global/console", "xinject-console");
       })
+      .then(function(script) {
+        return eval(script);
+      })
+      .then(function(module) {
+        expect(module).to.be.a('object');
+        expect(module.name).to.be.equal("xinject-console");
+        return Promise.all([
+          new Esquire().require("xinject-console"),
+          esquire("$global.console")
+        ])
+      })
+      .then(function(result) {
+        expect(result[0]).to.equal(result[1])
+      });
 
     });
   });

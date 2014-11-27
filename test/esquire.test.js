@@ -623,16 +623,16 @@
 
       it('should return the same module', function() {
         var modules = Esquire.modules;
-        expect(modules['circular-a']   ).to.equal(Esquire.module('circular-a'));
-        expect(modules['circular-b']   ).to.equal(Esquire.module('circular-b'));
-        expect(modules['circular-c']   ).to.equal(Esquire.module('circular-c'));
-        expect(modules['circular-d']   ).to.equal(Esquire.module('circular-d'));
-        expect(modules['circular-e']   ).to.equal(Esquire.module('circular-e'));
-        expect(modules['circular-f']   ).to.equal(Esquire.module('circular-f'));
-        expect(modules['circular-g']   ).to.equal(Esquire.module('circular-g'));
-        expect(modules['circular-self']).to.equal(Esquire.module('circular-self'));
-        expect(modules['module-a']     ).to.equal(Esquire.module('module-a'));
-        expect(modules['module-b']     ).to.equal(Esquire.module('module-b'));
+        expect(modules['circular-a']   ).to.equal(Esquire.modules['circular-a']);
+        expect(modules['circular-b']   ).to.equal(Esquire.modules['circular-b']);
+        expect(modules['circular-c']   ).to.equal(Esquire.modules['circular-c']);
+        expect(modules['circular-d']   ).to.equal(Esquire.modules['circular-d']);
+        expect(modules['circular-e']   ).to.equal(Esquire.modules['circular-e']);
+        expect(modules['circular-f']   ).to.equal(Esquire.modules['circular-f']);
+        expect(modules['circular-g']   ).to.equal(Esquire.modules['circular-g']);
+        expect(modules['circular-self']).to.equal(Esquire.modules['circular-self']);
+        expect(modules['module-a']     ).to.equal(Esquire.modules['module-a']);
+        expect(modules['module-b']     ).to.equal(Esquire.modules['module-b']);
       });
 
       promises('should resolve empty dependencies', function() {
@@ -648,8 +648,8 @@
           .then(function(dependencies) {
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(2);
-            expect(dependencies['module-a']).to.equal(Esquire.module('module-a'));
-            expect(dependencies['module-b']).to.equal(Esquire.module('module-b'));
+            expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
+            expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
           });
       });
 
@@ -658,7 +658,7 @@
           .then(function(dependencies) {
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(1);
-            expect(dependencies['module-c']).to.equal(Esquire.module('module-c'));
+            expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
           });
       });
 
@@ -667,9 +667,9 @@
           .then(function(dependencies) {
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(3);
-            expect(dependencies['module-a']).to.equal(Esquire.module('module-a'));
-            expect(dependencies['module-b']).to.equal(Esquire.module('module-b'));
-            expect(dependencies['module-c']).to.equal(Esquire.module('module-c'));
+            expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
+            expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
+            expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
           });
       });
 
@@ -699,10 +699,10 @@
             expect(dependencies[name3].name).to.equal(name3);
 
             // those ones on the other hand were not deferred, safe to check...
-            expect(dependencies['module-a']).to.equal(Esquire.module('module-a'));
-            expect(dependencies['module-b']).to.equal(Esquire.module('module-b'));
-            expect(dependencies['module-c']).to.equal(Esquire.module('module-c'));
-            expect(dependencies['module-d']).to.equal(Esquire.module('module-d'));
+            expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
+            expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
+            expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
+            expect(dependencies['module-d']).to.equal(Esquire.modules['module-d']);
           });
       });
 
@@ -712,13 +712,13 @@
           .then(function(dependencies) {
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(7);
-            expect(dependencies['circular-a']).to.equal(Esquire.module('circular-a'));
-            expect(dependencies['circular-b']).to.equal(Esquire.module('circular-b'));
-            expect(dependencies['circular-c']).to.equal(Esquire.module('circular-c'));
-            expect(dependencies['circular-d']).to.equal(Esquire.module('circular-d'));
-            expect(dependencies['circular-e']).to.equal(Esquire.module('circular-e'));
-            expect(dependencies['circular-f']).to.equal(Esquire.module('circular-f'));
-            expect(dependencies['circular-g']).to.equal(Esquire.module('circular-g'));
+            expect(dependencies['circular-a']).to.equal(Esquire.modules['circular-a']);
+            expect(dependencies['circular-b']).to.equal(Esquire.modules['circular-b']);
+            expect(dependencies['circular-c']).to.equal(Esquire.modules['circular-c']);
+            expect(dependencies['circular-d']).to.equal(Esquire.modules['circular-d']);
+            expect(dependencies['circular-e']).to.equal(Esquire.modules['circular-e']);
+            expect(dependencies['circular-f']).to.equal(Esquire.modules['circular-f']);
+            expect(dependencies['circular-g']).to.equal(Esquire.modules['circular-g']);
           });
       });
 
@@ -727,7 +727,7 @@
           .then(function(dependencies) {
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(1);
-            expect(dependencies['circular-self']).to.equal(Esquire.module('circular-self'));
+            expect(dependencies['circular-self']).to.equal(Esquire.modules['circular-self']);
           });
       });
 

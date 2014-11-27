@@ -768,7 +768,6 @@
 
     /* Create and remember our new module */
     var module = modules[name] = new Module(name, dependencies, constructor);
-    if (module.$$dynamic) return module;
 
     /* Notify all "define" listeners */
     for (var i in listeners['define']) {
@@ -1151,8 +1150,8 @@
      *                                 resolved. If `false` or _undefined_, only
      *                                 the {@link Module}'s explicit dependencies
      *                                 will be resolved.
-     * @returns {Object.<string,Module>} An dictionary of all required
-     *                                   {@link Module}s keyed by `name`.
+     * @returns {Promise} An {@link Promise} to a dictionary of all required
+     *                    {@link Module}s keyed by their `name`.
      */
     "resolve": { enumerable: true, configurable: false, value: function(module, transitive) {
       if (typeof(module) === 'string') {
@@ -1232,8 +1231,8 @@
     }},
 
     /**
-     * Return the {@link Module} associated with the given `name` as defined
-     * in {@link Esquire} or `null`.
+     * Returns a {@link Promise} to the {@link Module} associated with the
+     * given `name`.
      *
      * @static
      * @function module
@@ -1242,10 +1241,7 @@
      * @returns {Module} The {@link Module} or `null`
      */
     "module": { enumerable: true, configurable: false, value: function(name) {
-      name = globalName(name);
-      if (name in modules) return modules[name];
-      if (isGlobal(name)) return new GlobalModule(name);
-      return null;
+      return Promise.resolve(moduleOrPromise(name));
     }},
 
     /**
