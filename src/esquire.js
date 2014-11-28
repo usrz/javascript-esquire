@@ -1100,7 +1100,6 @@
 
   Object.defineProperties(Esquire, {
     "$$script":    { enumerable: false, configurable: false, value: EsquireScript.toString() },
-    "$$normalize": { enumerable: false, configurable: false, value: normalize },
     "$$Promise":   { enumerable: false, configurable: false, value: PromiseImpl },
     "$$Deferred":  { enumerable: false, configurable: false, value: Deferred },
 
@@ -1166,10 +1165,7 @@
       }
 
       var hash = {};
-      if (includeSelf) {
-        console.warn("INCLUDING SELF");
-        hash[module.name] = module;
-      };
+      if (includeSelf) hash[module.name] = module;
 
       if (transitive) {
         return resolveTransitiveDependencies(module, hash);
