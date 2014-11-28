@@ -20,6 +20,9 @@
     };
   }
 
+  /* Promise implementation */
+  var Promise = global.Promise || PromiseImpl;
+
   /*==========================================================================*
    | *======================================================================* |
    | | DEFERRED IMPLEMENTATION                                              | |
@@ -111,7 +114,7 @@
        * @member {Promise} module:$deferred.Deferred#promise
        */
       "promise": { enumerable: true, configurable: false, value:
-        Object.defineProperties(new Object(), {
+        Object.defineProperties(Object.create(Promise.prototype), {
           "then":  { enumerable: true, configurable: false, value: function(onSuccess, onFailure) {
             var chained = new Deferring(onSuccess, onFailure);
             if (status == 0) {
@@ -636,9 +639,6 @@
 
   /* The global timeout */
   var globalTimeout = 2000;
-
-  /* Promise implementation */
-  var Promise = global.Promise || PromiseImpl;
 
   /* Listeners (should contain only "define") */
   var listeners = { define: [] };

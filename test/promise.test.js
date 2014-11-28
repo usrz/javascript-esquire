@@ -39,46 +39,40 @@
         /* RESOLUTION                                                           */
         /* ==================================================================== */
 
-        it("should resolve 1", function(done) {
+        promises("should resolve 1", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             resolve("foo");
           });
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal("foo");
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should resolve 2", function(done) {
+        promises("should resolve 2", function() {
 
           var promise = PromiseImpl.resolve("foo");
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal('foo');
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should resolve a resolved promise", function(done) {
+        promises("should resolve a resolved promise", function() {
 
           var resolved = PromiseImpl.resolve("foo");
           var promise = PromiseImpl.resolve(resolved);
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal('foo');
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
 
         });
@@ -87,46 +81,46 @@
         /* REJECTION                                                            */
         /* ==================================================================== */
 
-        it("should reject 1", function(done) {
+        promises("should reject 1", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             reject("foo");
           });
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("foo");
-          }));
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should reject 2", function(done) {
+        promises("should reject 2", function() {
 
           var promise = PromiseImpl.reject("foo");
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("foo");
-          }));
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should reject a rejected promise", function(done) {
+        promises("should reject a rejected promise", function() {
 
           var rejected = PromiseImpl.reject("foo");
           var promise = PromiseImpl.resolve(rejected);
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("foo");
-          }));
+          }).done();
 
         });
 
@@ -134,87 +128,79 @@
         /* CHAINING TESTS                                                       */
         /* ==================================================================== */
 
-        it("should handle chaining on resolve", function(done) {
+        promises("should handle chaining on resolve", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             resolve("foo");
           }).then(function(result) {
             return result + "bar";
-          }, function(result) {
-            done(result || new Error("Failed"));
           });
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal('foobar');
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should handle chaining on reject", function(done) {
+        promises("should handle chaining on reject", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             reject("foo");
           }).then(function(result) {
-            done(result || new Error("Failed"));
+            throw (result || new Error("Failed"));
           }, function(result) {
             return result + "bar";
           });
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal('foobar');
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should handle exceptions chaining on resolve", function(done) {
+        promises("should handle exceptions chaining on resolve", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             resolve("foo");
           }).then(function(result) {
             throw "success=" + result;
-          }, function(result) {
-            done(result || new Error("Failed"));
           });
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("success=foo");
-          }));
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should handle exceptions chaining on reject", function(done) {
+        promises("should handle exceptions chaining on reject", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             reject("foo");
           }).then(function(result) {
-            done(result || new Error("Failed"));
+            throw (result || new Error("Failed"));
           }, function(result) {
             throw "failure=" + result;
           });
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("failure=foo");
-          }));
+          }).done();
 
         });
 
         /* ==================================================================== */
 
-        it("should handle deep exceptions", function(done) {
+        promises("should handle deep exceptions", function() {
 
           var first = new PromiseImpl(function(resolve, reject) {
             setTimeout(function() {
@@ -238,11 +224,11 @@
             throw "failure=baz";
           });
 
-          promise4.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise4.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("failure=bar");
-          }));
+          }).done();
 
         });
 
@@ -250,93 +236,84 @@
         /* OTHER TESTS                                                          */
         /* ==================================================================== */
 
-        it("should resolve all promises with undefined results", function(done) {
+        promises("should resolve all promises with undefined results", function() {
           var p1 = new PromiseImpl(function (resolve, reject) { resolve("defined") });
           var p2 = new PromiseImpl(function (resolve, reject) { resolve() });
 
-          PromiseImpl.all([p1, p2]).then(function(success) {
+          return PromiseImpl.all([p1, p2]).then(function(success) {
             expect(success).to.be.instanceof(Array);
             expect(success.length).to.equal(2);
             expect(success[0]).to.equal("defined");
             expect(success[1]).to.equal(undefined);
-          })
+          }).done()
 
-          .then(function(success) {
-            done();
-          }, function(failure) {
-            done(failure);
-          });
         });
 
-        it("should not throw exceptions", function(done) {
+        promises("should not throw exceptions", function() {
 
           var promise = new PromiseImpl(function(resolve, reject) {
             throw "foo";
           })
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("foo");
-          }));
+          }).done();
 
         });
 
-        it("should resolve an empty array of promises", function(done) {
+        promises("should resolve an empty array of promises", function() {
           var promise = PromiseImpl.all([]);
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.eql([]);
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
-        it("should combine multiple resolved promises", function(done) {
+        promises("should combine multiple resolved promises", function() {
           var promise = PromiseImpl.all(["foo", PromiseImpl.resolve("bar"), PromiseImpl.resolve("baz")]);
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.eql(['foo', 'bar', 'baz']);
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
-        it("should combine multiple rejected promises", function(done) {
+        promises("should combine multiple rejected promises", function() {
           var promise = PromiseImpl.all(["foo", PromiseImpl.resolve("bar"), PromiseImpl.reject("baz")]);
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal('baz');
-          }));
+          }).done();
 
         });
 
-        it("should fail when all is called with undefined", function(done) {
+        promises("should fail when all is called with undefined", function() {
 
-          PromiseImpl.all().then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return PromiseImpl.all().then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.instanceof(TypeError);
-          }));
+          }).done();
 
         });
 
-        it("should fail when all is called with something other than an array", function(done) {
+        promises("should fail when all is called with something other than an array", function() {
           var promise = PromiseImpl.all("hello");
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.instanceof(TypeError);
-          }));
+          }).done();
 
         });
 
-        it("should race multiple promises with a winning resolution", function(done) {
+        promises("should race multiple promises with a winning resolution", function() {
 
           var resolvedPromiseImpl = new PromiseImpl(function(resolve, reject) {
             setTimeout(function() {
@@ -352,15 +329,13 @@
 
           var promise = PromiseImpl.race([resolvedPromiseImpl, rejectedPromiseImpl])
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal('foo');
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done();
 
         });
 
-        it("should race multiple promises with a winning rejection", function(done) {
+        promises("should race multiple promises with a winning rejection", function() {
 
           var resolvedPromiseImpl = new PromiseImpl(function(resolve, reject) {
             setTimeout(function() {
@@ -376,71 +351,50 @@
 
           var promise = PromiseImpl.race([resolvedPromiseImpl, rejectedPromiseImpl])
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal('bar');
-          }));
+          }).done();
 
         });
 
-        it("should not race an undefined array", function(done) {
+        promises("should not race an undefined array", function() {
 
-          PromiseImpl.race().then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return PromiseImpl.race().then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.instanceof(TypeError);
-          }));
+          }).done();
 
         });
 
-        it("should not race an something other than array", function(done) {
+        promises("should not race an something other than array", function() {
 
-          PromiseImpl.race('foo').then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return PromiseImpl.race('foo').then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.instanceof(TypeError);
-          }));
+          }).done();
 
         });
 
         it("should not resolve an empty array of promises", function(done) {
 
-          new PromiseImpl(function(resolve, reject) {
-
-            /* Race the empty array */
-            PromiseImpl.race([]).then(function(result) {
-              done(result || new Error("Failed"));
-            }, wrap(done, function(result) {
-              expect(result).to.be.instanceof(TypeError);
-              done();
-            }));
-
-            /* Confirm after a bit... */
-            setTimeout(function() { done() }, 100);
+          /* Race the empty array */
+          PromiseImpl.race([]).then(function(success) {
+            done(success || new Error("Failed resolve"));
+          }, function(failure) {
+            done(failure || new Error("Failed reject"));
           });
 
+          global.setTimeout(done, 50);
 
         });
 
       });
     }
   });
-
-  /* ======================================================================== */
-  /* WRAP: Wrap a done and a function for easy testing                        */
-  /* ======================================================================== */
-
-  function wrap(done, what) {
-    return(function() {
-      try {
-        what.apply(this, arguments);
-        done();
-      } catch (error) {
-        done(error);
-      }
-    })
-  }
 
 })((function() {
   try {

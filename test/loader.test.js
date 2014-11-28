@@ -13,121 +13,101 @@ describe('Esquire loader', function() {
     expect(Esquire.load).to.be.a('function');
   });
 
-  it('should resolve with no scripts', function(done) {
-
-    Esquire.load()
+  promises('should resolve with no scripts', function() {
+    return Esquire.load()
       .then(function(success) {
-        done();
-      }, function(failure) {
-        done(failure);
-      });
+        expect(success).to.deep.equal(Esquire.modules);
+      }).done();
   })
 
-  it('should resolve with an empty script', function(done) {
+  promises('should resolve with an empty script', function() {
 
-    Esquire.load(file("empty-script.js"))
+    return Esquire.load(file("empty-script.js"))
       .then(function(success) {
-        done();
-      }, function(failure) {
-        done(failure);
-      });
+        expect(success).to.deep.equal(Esquire.modules);
+      }).done();
   })
 
-  it('should resolve with a normal script', function(done) {
+  promises('should resolve with a normal script', function() {
 
-    Esquire.load(file("normal-script.js"))
+    return Esquire.load(file("normal-script.js"))
       .then(function(success) {
-        done();
-      }, function(failure) {
-        done(failure);
-      });
+        expect(success).to.deep.equal(Esquire.modules);
+      }).done();
   })
 
-  it('should reject on a non existant script', function(done) {
+  promises('should reject on a non existant script', function() {
 
-    Esquire.load(file("non-existant.js"))
+    return Esquire.load(file("non-existant.js"))
       .then(function(success) {
-        done(new Error("Should fail"));
+        throw new Error("Should fail");
       }, function(failure) {
-        done();
-      });
+        expect(failure).to.be.instanceof(Error);
+      }).done();
   })
 
-  it('should reject on parse exception', function(done) {
+  promises('should reject on parse exception', function() {
 
-    Esquire.load(file("parse-exception.js"))
+    return Esquire.load(file("parse-exception.js"))
       .then(function(success) {
-        done(new Error("Should fail"));
+        throw new Error("Should fail");
       }, function(failure) {
-        done();
-      });
+        expect(failure).to.be.instanceof(Error);
+      }).done();
   })
 
-  it('should reject on undefined variable', function(done) {
+  promises('should reject on undefined variable', function() {
 
-    Esquire.load(file("undefined-variable.js"))
+    return Esquire.load(file("undefined-variable.js"))
       .then(function(success) {
-        done(new Error("Should fail"));
+        throw new Error("Should fail");
       }, function(failure) {
-        done();
-      });
+        expect(failure).to.be.instanceof(Error);
+      }).done();
   })
 
-  it('should reject on exception thrown', function(done) {
+  promises('should reject on exception thrown', function() {
 
-    Esquire.load(file("throws-error.js"))
+    return Esquire.load(file("throws-error.js"))
       .then(function(success) {
-        done(new Error("Should fail"));
+        throw new Error("Should fail");
       }, function(failure) {
-        done();
-      });
+        expect(failure).to.be.instanceof(Error);
+      }).done();
   })
 
-  it('should reject on multiple files', function(done) {
+  promises('should reject on multiple files', function() {
 
-    Esquire.load(file("empty-script.js"), file("throws-error.js"))
+    return Esquire.load(file("empty-script.js"), file("throws-error.js"))
       .then(function(success) {
-        done(new Error("Should fail"));
+        throw new Error("Should fail");
       }, function(failure) {
-        done();
-      });
+        expect(failure).to.be.instanceof(Error);
+      }).done();
   })
 
-  it('should resolve on multiple files', function(done) {
+  promises('should resolve on multiple files', function() {
 
-    Esquire.load(file("empty-script.js"), file("normal-script.js"))
+    return Esquire.load(file("empty-script.js"), file("normal-script.js"))
       .then(function(success) {
-        done();
-      }, function(failure) {
-        done(failure);
-      });
+        expect(success).to.deep.equal(Esquire.modules);
+      }).done();
   })
 
-  it('should load a module from an external script', function(done) {
+  promises('should load a module from an external script', function() {
 
-    Esquire.load(file("module-script.js"))
+    return Esquire.load(file("module-script.js"))
       .then(function(success) {
         expect(success['loaded-module']).to.exist();
         return new Esquire().require('loaded-module');
-      }, function(failure) {
-        console.warn("Exception loading script 'module-script.js");
-        done(failure);
       })
 
       .then(function(module) {
         expect(module).to.be.equal('This was loaded from an external module');
-        done();
-
-      }, function(failure) {
-        console.warn("Exception resolving module from 'module-script.js");
-        done(failure);
       })
 
-      .then(function(success) {
-        done();
-      }, function(failure) {
-        done(failure);
-      });
+      .done();
+
   })
 
 })

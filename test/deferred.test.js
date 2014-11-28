@@ -21,71 +21,67 @@
     function createTests(suite, PromiseImpl) {
       describe(suite, function() {
 
-        it("should resolve a deferred", function(done) {
+        promises("should resolve a deferred", function() {
 
           var deferred = new Deferred();
           var promise = deferred.promise;
           deferred.resolve("foo");
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal("foo");
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        it("should resolve a deferred resolved with a resolved promise", function(done) {
+        promises("should resolve a deferred resolved with a resolved promise", function() {
 
           var deferred = new Deferred();
           var promise = deferred.promise;
           deferred.resolve(PromiseImpl.resolve("foo"));
 
-          promise.then(wrap(done, function(result) {
+          return promise.then(function(result) {
             expect(result).to.be.equal("foo");
-          }), function(result) {
-            done(result || new Error("Failed"));
-          });
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        it("should reject a deferred", function(done) {
+        promises("should reject a deferred", function() {
 
           var deferred = new Deferred();
           var promise = deferred.promise;
           deferred.reject("foo");
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("foo");
-          }));
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        it("should reject a deferred resolved with a rejected promise", function(done) {
+        promises("should reject a deferred resolved with a rejected promise", function() {
 
           var deferred = new Deferred();
           var promise = deferred.promise;
           deferred.resolve(PromiseImpl.reject("foo"));
 
-          promise.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("foo");
-          }));
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        it("should handle deep exceptions", function(done) {
+        promises("should handle deep exceptions", function() {
 
           var deferred = new Deferred();
 
@@ -110,17 +106,17 @@
             throw "failure=baz";
           });
 
-          promise4.then(function(result) {
-            done(result || new Error("Failed"));
-          }, wrap(done, function(result) {
+          return promise4.then(function(result) {
+            throw (result || new Error("Failed"));
+          }, function(result) {
             expect(result).to.be.equal("failure=bar");
-          }));
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        it("should resolve deferred resolved with undefined", function(done) {
+        promises("should resolve deferred resolved with undefined", function() {
 
           var deferred1 = new Deferred();
           var deferred2 = new Deferred();
@@ -139,24 +135,18 @@
             // console.log("OK 2", result);
           });
 
-          PromiseImpl.all([promise1, promise2]).then(function(success) {
+          return PromiseImpl.all([promise1, promise2]).then(function(success) {
             expect(success).to.be.instanceof(Array);
             expect(success.length).to.equal(2);
             expect(success[0]).to.equal("defined");
             expect(success[1]).to.equal(undefined);
-          })
-
-          .then(function(success) {
-            done();
-          }, function(failure) {
-            done(failure);
-          });
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        promises("should timeout with no rejection specified", function(done) {
+        promises("should timeout with no rejection specified", function() {
 
           var deferred = new Deferred(10);
 
@@ -164,18 +154,18 @@
             deferred.resolve("this is bad...");
           }, 20)
 
-          return deferred.promise.then(wrap(done, function(result) {
+          return deferred.promise.then(function(result) {
             throw new Error("Should not resolve");
-          }), function(failure) {
+          }, function(failure) {
             expect(failure).to.be.instanceof(Error);
             expect(failure.message).to.be.equal('Timeout waiting for resolution/rejection');
-          })
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        promises("should timeout with a rejection message", function(done) {
+        promises("should timeout with a rejection message", function() {
 
           // 0, not null but also not truthy...
           var deferred = new Deferred(10, "Fail, deferred, FAIL!");
@@ -184,18 +174,18 @@
             deferred.resolve("this is bad...");
           }, 20)
 
-          return deferred.promise.then(wrap(done, function(result) {
+          return deferred.promise.then(function(result) {
             throw new Error("Should not resolve");
-          }), function(failure) {
+          }, function(failure) {
             expect(failure).to.be.instanceof(Error);
             expect(failure.message).to.be.equal('Fail, deferred, FAIL!');
-          })
+          }).done;
 
         });
 
         /* ==================================================================== */
 
-        promises("should timeout with a specific rejection", function(done) {
+        promises("should timeout with a specific rejection", function() {
 
           // 0, not null but also not truthy...
           var deferred = new Deferred(10, 0);
@@ -204,33 +194,18 @@
             deferred.resolve("this is bad...");
           }, 20)
 
-          return deferred.promise.then(wrap(done, function(result) {
+          return deferred.promise.then(function(result) {
             throw new Error("Should not resolve");
-          }), function(failure) {
+          }, function(failure) {
             expect(failure).to.be.a('number');
             expect(failure).to.be.equal(0);
-          })
+          }).done;
 
         });
 
       });
     }
   });
-
-  /* ======================================================================== */
-  /* WRAP: Wrap a done and a function for easy testing                        */
-  /* ======================================================================== */
-
-  function wrap(done, what) {
-    return(function() {
-      try {
-        what.apply(this, arguments);
-        done();
-      } catch (error) {
-        done(error);
-      }
-    })
-  }
 
 })((function() {
   try {

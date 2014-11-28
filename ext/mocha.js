@@ -2,19 +2,35 @@
 
 (function (global) {
 
+  if (! global.Esquire) throw new Error("Esquire not available");
+
+  var successInstance = function() {
+    return this.then(function(success) {
+      return successInstance;
+    })
+  };
+
+  global.Esquire.$$Promise.prototype.done = successInstance;
+  if (global.Promise) global.Promise.prototype.done = successInstance;
+
   /* Extension to mocha: "promises(...)" is like a deferred "it(...)"  */
   function invoke(itfn, title, fn) {
     return itfn.call(this, title, function(done) {
-      var failure;
+      var failure = null;
+
       try {
         var promise = fn.call(this);
         if (promise && (typeof(promise.then) === 'function')) {
           promise.then(function(success) {
-            done(failure);
+            if (failure != null) done(failure);
+            else if (success === successInstance) done();
+            else done(new Error("Not notified of completion: call 'done()' on the last promise"));
           }, function(failure) {
             console.warn("Rejected: ", failure);
             done(failure);
           })
+        } else if (promise === successInstance) {
+          done();
         } else {
           done(new Error("Test did not return a Promise"));
         }
