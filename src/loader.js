@@ -8,6 +8,31 @@
   /* Event managemet for script loading                                       */
   /* ======================================================================== */
 
+  /* Flatten an array, or array of array, for aguments */
+  function flatten(iterable) {
+    if (! iterable) return [];
+
+    var array = [];
+    for (var i = 0; i < iterable.length; i ++) {
+      var current = iterable[i];
+      if (typeof(current) === 'string') {
+        array.push(current);
+      } else if (typeof(current) === 'function') {
+        array.push(current);
+      } else if (Array.isArray(current)) {
+        array = array.concat(flatten(current));
+      } else if ((typeof(current) === 'object')
+              && (typeof(current.length) === 'number')) {
+        // JavaScripts' "arguments" is an object, not an array, and on top of
+        // that PhantomJS' own implementation is not iterable... Workaround!
+        array = array.concat(flatten(current));
+      } else {
+        throw new EsquireError("Invalid dependency: " + JSON.stringify(current));
+      }
+    }
+    return array;
+  };
+
   /* Loaded scripts are all scripts we already loaded */
   var loadedScripts = {};
   /* Script locations are then-ables for scripts being loaded */
@@ -105,7 +130,7 @@
     thenable.remaining = 0;
 
     /* Create all our script tags */
-    var locations = Esquire.$$normalize(arguments).arguments;
+    var locations = flatten(arguments);
     var scripts = [];
     for (var i in locations) {
       (function(location) {

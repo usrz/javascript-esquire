@@ -1,4 +1,4 @@
- 'use strict';
+'use strict';
 
 /** @typedef {module:$deferred.Deferred} Deferred */
 /** @typedef {module:$promise.Promise} Promise */
@@ -678,7 +678,6 @@
     }
     return array;
   };
-
 
   /* Normalize and validate an array into a array/function object */
   function normalize() {

@@ -1,3 +1,5 @@
+'use strict';
+
 /* Disable Karma's error interception */
 window.onerror = null;
 
