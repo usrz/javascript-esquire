@@ -13,6 +13,13 @@
   if (!global.console.info)  global.console.info  = function(){};
   if (!global.console.debug) global.console.debug = function(){};
 
+  /* We definitely need an Array.isArray() method */
+  if (! global.Array.isArray) {
+    global.Array.isArray = function(arg) {
+      return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+  }
+
   /*==========================================================================*
    | *======================================================================* |
    | | DEFERRED IMPLEMENTATION                                              | |
