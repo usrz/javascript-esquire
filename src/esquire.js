@@ -1150,28 +1150,38 @@
      *                                 resolved. If `false` or _undefined_, only
      *                                 the {@link Module}'s explicit dependencies
      *                                 will be resolved.
+     * @param {boolean} [includeSelf] - If `true` the module we are resolving
+     *                                  (which might be a `string`) will also
+     *                                  be returned amongst its dependencies.
      * @returns {Promise} An {@link Promise} to a dictionary of all required
      *                    {@link Module}s keyed by their `name`.
      */
-    "resolve": { enumerable: true, configurable: false, value: function(module, transitive) {
+    "resolve": { enumerable: true, configurable: false, value: function(module, transitive, includeSelf) {
       if (typeof(module) === 'string') {
         return Promise.resolve(moduleOrPromise(module)).then(function(module) {
-          return Esquire.resolve(module, transitive);
+          return Esquire.resolve(module, transitive, includeSelf);
         })
       } else if (!(module instanceof Module)) {
         throw new TypeError("Must be invoked with Module or module name");
       }
 
-      if (transitive) return resolveTransitiveDependencies(module, {});
-      else return resolveDependencies(module).then(function(dependencies) {
-        var hash = {};
-        for (var i in dependencies) {
-          hash[dependencies[i].name] = dependencies[i];
-        }
-        return hash;
-      });
+      var hash = {};
+      if (includeSelf) {
+        console.warn("INCLUDING SELF");
+        hash[module.name] = module;
+      };
 
-      return resolveTransitiveDependencies(module, {});
+      if (transitive) {
+        return resolveTransitiveDependencies(module, hash);
+      } else {
+        return resolveDependencies(module)
+        .then(function(dependencies) {
+          for (var i in dependencies) {
+            hash[dependencies[i].name] = dependencies[i];
+          }
+          return hash;
+        });
+      }
     }},
 
     /**

@@ -662,6 +662,16 @@
           });
       });
 
+      promises('should resolve direct dependencies including self', function() {
+        return Esquire.resolve('module-d', false, true)
+          .then(function(dependencies) {
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(2);
+            expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
+            expect(dependencies['module-d']).to.equal(Esquire.modules['module-d']);
+          });
+      });
+
       promises('should resolve transitive dependencies', function() {
         return Esquire.resolve('module-d', true)
           .then(function(dependencies) {
@@ -670,6 +680,18 @@
             expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
             expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
             expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
+          });
+      });
+
+      promises('should resolve transitive dependencies including self', function() {
+        return Esquire.resolve('module-d', true, true)
+          .then(function(dependencies) {
+            expect(dependencies).to.be.an('object');
+            expect(Object.keys(dependencies).length).to.be.equal(4);
+            expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
+            expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
+            expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
+            expect(dependencies['module-d']).to.equal(Esquire.modules['module-d']);
           });
       });
 
