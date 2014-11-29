@@ -843,19 +843,21 @@
 
     var promises = [];
     for (var i in module.dependencies) {
-      var dependencyName = module.dependencies[i];
+      (function(dependencyName) {
 
-      /* Ignore already resolved dependencies */
-      if (hash[dependencyName]) continue;
+        /* Ignore already resolved dependencies */
+        if (hash[dependencyName]) return;
 
-      /* Get a module or a promise to it and put it in the hash NOW! */
-      var dependency = hash[dependencyName] = moduleOrPromise(dependencyName);
+        /* Get a module or a promise to it and put it in the hash NOW! */
+        var dependency = hash[dependencyName] = moduleOrPromise(dependencyName);
 
-      /* Transitively resolve the dependency */
-      promises.push(Promise.resolve(dependency).then(function(dependency) {
-        hash[dependencyName] = dependency;
-        return resolveTransitiveDependencies(dependency, hash);
-      }));
+        /* Transitively resolve the dependency */
+        promises.push(Promise.resolve(dependency).then(function(dependency) {
+          hash[dependencyName] = dependency;
+          return resolveTransitiveDependencies(dependency, hash);
+        }));
+
+      })(module.dependencies[i]);
     }
 
     return Promise.all(promises).then(function() {
