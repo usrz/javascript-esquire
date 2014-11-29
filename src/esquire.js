@@ -114,7 +114,7 @@
        * @member {Promise} module:$deferred.Deferred#promise
        */
       "promise": { enumerable: true, configurable: false, value:
-        Object.defineProperties(Object.create(Promise.prototype), {
+        Object.defineProperties(Object.create(PromiseImpl.prototype), {
           "then":  { enumerable: true, configurable: false, value: function(onSuccess, onFailure) {
             var chained = new Deferring(onSuccess, onFailure);
             if (status == 0) {
@@ -123,9 +123,6 @@
               notify([chained]);
             }
             return chained.promise;
-          }},
-          "catch": { enumerable: true, configurable: false, value: function(onFailure) {
-            return this.then(null, onFailure);
           }}
         })
       }
@@ -249,22 +246,6 @@
        */
       'then': { enumerable: true, configurable: false, value: function() {
         return deferred.promise.then.apply(deferred.promise, arguments);
-      }},
-
-      /**
-       * Appends a rejection handler to this {@link Promise}, and returns a
-       * **new** promise resolving to the return value of the called handler.
-       *
-       * This is equivalent to calling `then(null, onFailure)`.
-       *
-       * @param {function} [onFailure] - The handler to call when this
-       *        {@link Promise} has been rejected.
-       * @returns {Promise} A new {@link Promise} resolving to the return value
-       *          of the called handler
-       * @function module:$promise.Promise#catch
-       */
-      'catch': { enumerable: true, configurable: false, value: function() {
-        return deferred.promise.catch.apply(deferred.promise, arguments);
       }}
     });
 
@@ -280,6 +261,23 @@
   PromiseImpl.prototype = Object.create(Object.prototype);
   PromiseImpl.prototype.constructor = PromiseImpl;
   PromiseImpl.prototype.name = 'Promise';
+
+  /**
+   * Appends a rejection handler to this {@link Promise}, and returns a
+   * **new** promise resolving to the return value of the called handler.
+   *
+   * This is equivalent to calling `then(null, onFailure)`.
+   *
+   * @param {function} [onFailure] - The handler to call when this
+   *        {@link Promise} has been rejected.
+   * @returns {Promise} A new {@link Promise} resolving to the return value
+   *          of the called handler
+   * @function module:$promise.Promise#catch
+   */
+  PromiseImpl.prototype.catch = function(callback) {
+    return this.then(null, callback);
+  };
+
 
   /* ======================================================================== */
   /* Promise static methods                                                   */
@@ -815,7 +813,7 @@
   }
 
   /* Resolve direct dependencies for the specified module */
-  var emptyPromise =  Promise.resolve([]);
+  var emptyPromise = Promise.resolve([]);
   function resolveDependencies(module) {
     if (!(module instanceof Module)) {
       return Promise.reject("Unable to resolve module of type " + typeof(module));
@@ -898,7 +896,7 @@
   function Esquire(timeout) {
 
     /* Proper construction */
-    if (!(this instanceof Esquire)) return new Esquire(Promise);
+    if (!(this instanceof Esquire)) return new Esquire(timeout);
 
     /* Timeout */
     if (timeout === undefined) {

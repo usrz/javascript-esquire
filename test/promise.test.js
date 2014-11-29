@@ -111,6 +111,24 @@
 
         /* ==================================================================== */
 
+        promises("should reject 3", function() {
+
+          var promise = PromiseImpl.reject("foo");
+
+          return promise.catch(function(result) {
+            return "caught " + result;
+          })
+
+          .then(function(success) {
+            expect(success).to.equal("caught foo");
+          })
+
+          .done();
+
+        });
+
+        /* ==================================================================== */
+
         promises("should reject a rejected promise", function() {
 
           var rejected = PromiseImpl.reject("foo");
