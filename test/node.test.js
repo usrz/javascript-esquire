@@ -25,14 +25,14 @@ describe("Esquire under Node", function() {
     return esquire(['$promise', '$deferred'], function(p, d) {
       expect(p).to.be.equal(Esquire.$$Promise);
       expect(d).to.be.equal(Esquire.$$Deferred);
-    });
+    }).done();
   });
 
   promises('should inject instances', function() {
     return new esquire().inject(['$promise', '$deferred'], function(p, d) {
       expect(p).to.be.equal(Esquire.$$Promise);
       expect(d).to.be.equal(Esquire.$$Deferred);
-    });
+    }).done();
   });
 
   promises('should share instances with global esquire', function() {
@@ -54,7 +54,7 @@ describe("Esquire under Node", function() {
         expect(result[1]).to.equal(n2); // require, node 2
         expect(result[2]).to.equal(n1); // global, node 1
         expect(result[3]).to.equal(n2); // global, node 2
-      });
+      }).done();
   });
 
 });
