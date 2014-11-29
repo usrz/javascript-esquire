@@ -17,7 +17,7 @@
           return new Esquire().require(prefix + 'console')
           .then(function(result) {
             expect(result).to.equal(global.console);
-          })
+          }).done();
 
         });
 
@@ -26,7 +26,7 @@
           return new Esquire().require(prefix + 'undefinedGlobalSymbol')
           .then(function(result) {
             expect(result).to.be.an('undefined');
-          })
+          }).done();
 
         });
 
@@ -57,7 +57,7 @@
             expect(t1).to.equal("one");
             expect(t2).to.equal(2);
             expect(t3).to.be.a('undefined');
-          })
+          }).done();
 
         });
       });
@@ -90,7 +90,7 @@
         expect(result[2]).to.equal("msCrypto.subtle");
         expect(result[3]).to.equal("crypto.webkitSubtle");
         delete global.prefixedTest;
-      })
+      }).done();
 
     });
 
@@ -116,7 +116,7 @@
 
     });
 
-    it('should override and cache globals with proper definition', function() {
+    promises('should override and cache globals with proper definition', function() {
 
       var count = 0;
 
@@ -147,7 +147,7 @@
         expect(t1).to.be.equal(expected);
         expect(t2).to.be.equal(expected);
         expect(t3).to.be.equal(expected);
-      })
+      }).done();
 
     });
 
@@ -170,7 +170,7 @@
       })
       .then(function(result) {
         expect(result[0]).to.equal(result[1])
-      });
+      }).done();
 
     });
   });

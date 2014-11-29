@@ -4,14 +4,16 @@
 
   if (! global.Esquire) throw new Error("Esquire not available");
 
-  var successInstance = function() {
+  var successInstance = {};
+
+  var successPromise = function() {
     return this.then(function(success) {
       return successInstance;
     })
   };
 
-  global.Esquire.$$Promise.prototype.done = successInstance;
-  if (global.Promise) global.Promise.prototype.done = successInstance;
+  global.Esquire.$$Promise.prototype.done = successPromise;
+  if (global.Promise) global.Promise.prototype.done = successPromise;
 
   /* Extension to mocha: "promises(...)" is like a deferred "it(...)"  */
   function invoke(itfn, title, fn) {
@@ -29,7 +31,8 @@
             console.warn("Rejected: ", failure);
             done(failure);
           })
-        } else if (promise === successInstance) {
+        } else if (promise === successPromise) {
+          done(new Error("The completion notification 'done()' must be called as a function"));
           done();
         } else {
           done(new Error("Test did not return a Promise"));

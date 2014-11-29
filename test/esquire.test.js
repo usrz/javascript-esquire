@@ -45,6 +45,8 @@
           expect(b).to.be.equal('returned');
         })
 
+        .done();
+
       });
 
       /* -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
@@ -61,6 +63,8 @@
           expect(a).to.be.equal('valueForModuleA');
           expect(b).to.be.equal('returned');
         })
+
+        .done();
 
       });
 
@@ -80,6 +84,8 @@
           expect(b).to.be.equal('returned');
         })
 
+        .done();
+
       });
 
       promises('should inject two modules', function() {
@@ -97,6 +103,8 @@
           expect(b).to.be.match(/^valueForModuleB => /);
           expect(c).to.be.equal('returned');
         })
+
+        .done();
 
       });
 
@@ -116,6 +124,8 @@
           expect(c).to.be.equal('returned');
         })
 
+        .done();
+
       })
 
       promises('should inject with AngularJS array', function() {
@@ -134,6 +144,8 @@
           expect(c).to.be.equal('returned');
         })
 
+        .done();
+
       })
 
       /* -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  - */
@@ -144,6 +156,7 @@
         .then(function(a) {
           expect(a).to.be.equal('valueForModuleA');
         })
+        .done();
 
       });
 
@@ -155,6 +168,7 @@
           expect(a[0]).to.be.equal('valueForModuleA');
           expect(a[1]).to.be.equal('valueForModuleA');
         })
+        .done();
 
       });
 
@@ -166,6 +180,7 @@
           expect(a[0]).to.be.equal('valueForModuleA');
           expect(a[1]).to.be.equal('valueForModuleA');
         })
+        .done();
 
       });
 
@@ -176,6 +191,7 @@
           expect(a[0]).to.be.equal('valueForModuleA');
           expect(a[1]).to.be.match(/^valueForModuleB => /);
         })
+        .done();
 
       });
 
@@ -186,6 +202,7 @@
           expect(a[0]).to.be.equal('valueForModuleA');
           expect(a[1]).to.be.match(/^valueForModuleB => /);
         })
+        .done();
 
       });
 
@@ -195,6 +212,7 @@
         .then(function(success) {
           expect(success).to.equal("value-g");
         })
+        .done();
 
       });
 
@@ -211,6 +229,7 @@
           expect(error.originalCause).to.be.instanceof(Error);
           expect(error.originalCause.message).to.be.equal('This module always fails');
         })
+        .done();
 
       });
 
@@ -225,6 +244,7 @@
           expect(error.originalCause).to.be.instanceof(Error);
           expect(error.originalCause.message).to.be.equal('This module always fails');
         })
+        .done();
 
       });
 
@@ -239,6 +259,7 @@
           expect(error.originalCause).to.be.instanceof(Error);
           expect(error.originalCause.message).to.be.equal('value-h');
         })
+        .done();
 
       });
 
@@ -253,6 +274,7 @@
           expect(error.originalCause).to.be.instanceof(Error);
           expect(error.originalCause.message).to.be.equal("Timeout waiting for module 'module-i'");
         })
+        .done();
 
       });
 
@@ -264,6 +286,7 @@
         .then(function(w) {
           expect(w).to.be.equal(global);
         })
+        .done();
 
       });
 
@@ -275,6 +298,7 @@
           expect(e1).to.be.equal(e2);
           expect(e1 === e2).to.be.true;
         })
+        .done();
 
       });
 
@@ -294,6 +318,7 @@
           expect(b[1]).to.match(/^valueForModuleB => /);
           expect(b[0]).not.to.equal(b[1]);
         })
+        .done();
 
       });
 
@@ -308,6 +333,7 @@
           expect(b[1]).to.match(/^valueForModuleB => /);
           expect(b[0]).to.equal(b[1]);
         })
+        .done();
 
       });
 
@@ -319,6 +345,7 @@
           expect(a[1]).to.match(/^valueForModuleB => /);
           expect(a[0]).to.equal(a[1]);
         })
+        .done();
 
       });
 
@@ -332,6 +359,7 @@
           expect(g[1]).to.be.equal(global);
           expect(g[0] === g[1]).to.be.true;
         })
+        .done();
 
       });
 
@@ -349,7 +377,8 @@
           expect(e0 === e[0]).to.be.true;
           expect(e1 === e[1]).to.be.true;
           expect(e0).not.to.be.equal(e1);
-        });
+        })
+        .done();
 
       });
 
@@ -367,6 +396,7 @@
           expect(c['a']).to.equal('valueForModuleA');
           expect(c['b']).to.match(/^valueForModuleB => /);
         })
+        .done();
 
       });
 
@@ -385,7 +415,7 @@
           expect(x[2]['a']).to.equal(x[0]);
           expect(x[2]['b']).to.equal(x[1]);
         })
-
+        .done();
 
       });
 
@@ -406,6 +436,7 @@
           expect(x[2]['b']).to.equal(x[1]);
           expect(x[3].transitive).to.equal(x[2]);
         })
+        .done();
 
       });
 
@@ -437,6 +468,7 @@
         }).then(function(result) {
           expect(result).to.equal("return module " + name);
         })
+        .done();
 
       });
 
@@ -457,6 +489,7 @@
         }).then(function(result) {
           expect(result).to.equal("return module " + name + ":valueForModuleA");
         })
+        .done();
 
       });
 
@@ -477,6 +510,7 @@
         }).then(function(result) {
           expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
         })
+        .done();
 
       });
 
@@ -497,6 +531,7 @@
         }).then(function(result) {
           expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
         })
+        .done();
 
       });
 
@@ -523,6 +558,7 @@
         }).then(function(result) {
           expect(result).to.equal("return module " + name);
         })
+        .done();
 
       });
 
@@ -548,6 +584,7 @@
         }).then(function(result) {
           expect(result).to.equal("return module " + name);
         })
+        .done();
 
       });
 
@@ -573,6 +610,7 @@
         }).then(function(result) {
           expect(result).to.equal("return module " + name + ":valueForModuleA");
         })
+        .done();
 
       });
 
@@ -598,6 +636,7 @@
         }).then(function(result) {
           expect(result).to.match(new RegExp('^return module ' + name + ':valueForModuleA/valueForModuleB => '));
         })
+        .done();
 
       });
 
@@ -640,7 +679,7 @@
           .then(function(dependencies) {
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(0);
-          });
+          }).done();
       });
 
       promises('should resolve valid dependencies', function() {
@@ -650,7 +689,7 @@
             expect(Object.keys(dependencies).length).to.be.equal(2);
             expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
             expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
-          });
+          }).done();
       });
 
       promises('should resolve direct dependencies', function() {
@@ -659,7 +698,7 @@
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(1);
             expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
-          });
+          }).done();
       });
 
       promises('should resolve direct dependencies including self', function() {
@@ -669,7 +708,7 @@
             expect(Object.keys(dependencies).length).to.be.equal(2);
             expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
             expect(dependencies['module-d']).to.equal(Esquire.modules['module-d']);
-          });
+          }).done();
       });
 
       promises('should resolve transitive dependencies', function() {
@@ -680,7 +719,7 @@
             expect(dependencies['module-a']).to.equal(Esquire.modules['module-a']);
             expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
             expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
-          });
+          }).done();
       });
 
       promises('should resolve transitive dependencies including self', function() {
@@ -692,7 +731,7 @@
             expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
             expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
             expect(dependencies['module-d']).to.equal(Esquire.modules['module-d']);
-          });
+          }).done();
       });
 
       promises('should resolve transitive deferred dependencies', function() {
@@ -725,7 +764,7 @@
             expect(dependencies['module-b']).to.equal(Esquire.modules['module-b']);
             expect(dependencies['module-c']).to.equal(Esquire.modules['module-c']);
             expect(dependencies['module-d']).to.equal(Esquire.modules['module-d']);
-          });
+          }).done();
       });
 
 
@@ -741,7 +780,7 @@
             expect(dependencies['circular-e']).to.equal(Esquire.modules['circular-e']);
             expect(dependencies['circular-f']).to.equal(Esquire.modules['circular-f']);
             expect(dependencies['circular-g']).to.equal(Esquire.modules['circular-g']);
-          });
+          }).done();
       });
 
       promises('should resolve circular dependencies to self', function() {
@@ -750,7 +789,7 @@
             expect(dependencies).to.be.an('object');
             expect(Object.keys(dependencies).length).to.be.equal(1);
             expect(dependencies['circular-self']).to.equal(Esquire.modules['circular-self']);
-          });
+          }).done();
       });
 
     });
@@ -767,7 +806,7 @@
 
         return new Esquire(100).inject(name, function(value) {
           expect(value).to.be.equal("value for " + name);
-        });
+        }).done();
       });
 
       promises('should wait until modules are defined and reject', function() {
@@ -789,7 +828,7 @@
           expect(failure.originalCause).to.be.instanceof(Error);
           expect(failure.originalCause.message).to.equal("Error " + name);
           expect(invoked).to.be.false;
-        })
+        }).done()
 
       });
 
@@ -816,7 +855,7 @@
           expect(failure).to.be.instanceof(Error);
           expect(failure.message).to.match(/module 'not-known' not found/i);
           expect(invoked).to.be.false;
-        })
+        }).done();
 
       });
 
@@ -828,7 +867,7 @@
         }, function (failure) {
           expect(failure).to.be.instanceof(Error);
           expect(failure.message).to.match(/module 'not-known' not found/i);
-        })
+        }).done();
 
       });
 
@@ -847,7 +886,7 @@
           expect(failure.message).to.match(/^Esquire: Injection failed/);
           expect(failure.originalCause).to.be.instanceof(Error);
           expect(failure.originalCause.message).to.equal("Esquire: Detected circular dependency in circular-a -> circular-b -> circular-c -> circular-d -> circular-e -> circular-f -> circular-g -> circular-a");
-        })
+        }).done();
 
       });
 
@@ -866,7 +905,7 @@
           expect(failure.message).to.match(/^Esquire: Injection failed/);
           expect(failure.originalCause).to.be.instanceof(Error);
           expect(failure.originalCause.message).to.equal("Esquire: Detected circular dependency in circular-self -> circular-self");
-        })
+        }).done();
 
       });
 

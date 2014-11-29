@@ -11,7 +11,7 @@
     if (global.Promise) createTests("with native Promise", global.Promise);
 
     /* Always test our "emulated" and default Promise implementation */
-    createTests("with emulated Promize", Esquire.$$Promise);
+    createTests("with emulated Promise", Esquire.$$Promise);
 
     /*
      * Parameters:
@@ -29,7 +29,7 @@
 
           return promise.then(function(result) {
             expect(result).to.be.equal("foo");
-          }).done;
+          }).done();
 
         });
 
@@ -43,7 +43,7 @@
 
           return promise.then(function(result) {
             expect(result).to.be.equal("foo");
-          }).done;
+          }).done();
 
         });
 
@@ -59,7 +59,7 @@
             throw (result || new Error("Failed"));
           }, function(result) {
             expect(result).to.be.equal("foo");
-          }).done;
+          }).done();
 
         });
 
@@ -75,7 +75,7 @@
             throw (result || new Error("Failed"));
           }, function(result) {
             expect(result).to.be.equal("foo");
-          }).done;
+          }).done();
 
         });
 
@@ -110,7 +110,7 @@
             throw (result || new Error("Failed"));
           }, function(result) {
             expect(result).to.be.equal("failure=bar");
-          }).done;
+          }).done();
 
         });
 
@@ -140,7 +140,7 @@
             expect(success.length).to.equal(2);
             expect(success[0]).to.equal("defined");
             expect(success[1]).to.equal(undefined);
-          }).done;
+          }).done();
 
         });
 
@@ -159,7 +159,7 @@
           }, function(failure) {
             expect(failure).to.be.instanceof(Error);
             expect(failure.message).to.be.equal('Timeout waiting for resolution/rejection');
-          }).done;
+          }).done();
 
         });
 
@@ -179,7 +179,7 @@
           }, function(failure) {
             expect(failure).to.be.instanceof(Error);
             expect(failure.message).to.be.equal('Fail, deferred, FAIL!');
-          }).done;
+          }).done();
 
         });
 
@@ -199,7 +199,7 @@
           }, function(failure) {
             expect(failure).to.be.a('number');
             expect(failure).to.be.equal(0);
-          }).done;
+          }).done();
 
         });
 
