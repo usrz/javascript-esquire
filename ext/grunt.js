@@ -50,9 +50,12 @@ module.exports = function(grunt) {
 
     grunt.verbose.ok("Esquire: Waiting for " + promises.length + " injections before running Mocha");
     Esquire.$$Promise.all(promises)
-      .then(mocha.run(function(errCount) {
-        done(errCount === 0);
-      }), function(failure) {
+      .then(function(success) {
+        grunt.log.ok("Esquire: Running Mocha");
+        mocha.run(function(errCount) {
+          done(errCount === 0);
+        });
+      }, function(failure) {
         grunt.log.error("Failed injecting tests: " + failure.message);
         done(failure);
       })

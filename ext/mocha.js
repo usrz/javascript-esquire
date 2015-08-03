@@ -4,6 +4,16 @@
 
   if (! global.Esquire) throw new Error("Esquire not available");
 
+  // See https://github.com/mochajs/mocha/pull/946/commits
+  function SkipTest(message) {
+    if (!(this instanceof SkipTest)) throw new SkipTest(message);
+    Error.call(this, message || '');
+  }
+  SkipTest.prototype = Object.create(Error.prototype);
+  SkipTest.prototype.constructor = SkipTest;
+  SkipTest.prototype.name = 'SkipTest';
+
+
   var successInstance = {};
 
   var successPromise = function() {
@@ -18,6 +28,7 @@
   /* Extension to mocha: "promises(...)" is like a deferred "it(...)"  */
   function invoke(itfn, title, fn) {
     return itfn.call(this, title, function(done) {
+      var test = this.test;
       var failure = null;
 
       try {
@@ -28,18 +39,27 @@
             else if (success === successInstance) done();
             else done(new Error("Not notified of completion: call 'done()' on the last promise"));
           }, function(failure) {
-            console.warn("Rejected: ", failure);
-            done(failure);
+            if (failure instanceof SkipTest) {
+              if (failure.message) console.warn("Skipped: " + failure.message);
+              test.pending = true;
+              done();
+            } else {
+              done(failure);
+            }
           })
         } else if (promise === successPromise) {
           done(new Error("The completion notification 'done()' must be called as a function"));
-          done();
         } else {
           done(new Error("Test did not return a Promise"));
         }
       } catch (error) {
-        console.warn("Failed:", error);
-        done(failure = error);
+        if (error instanceof SkipTest) {
+          if (error.message) console.warn("Skipped: " + error.message);
+          test.pending = true;
+          done();
+        } else {
+          done(failure = error);
+        }
       }
     });
   };
@@ -68,6 +88,8 @@
 
   global.promises = promises;
   global.xpromises = xpromises;
+  global.SkipTest = SkipTest;
+  global.skipTest = SkipTest;
 
 })((function() {
   try {
